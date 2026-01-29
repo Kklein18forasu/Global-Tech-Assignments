@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Anonymous Burn Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <h1>🔥 Anonymous Game 🔥</h1>
+
+  <!-- JOIN SCREEN -->
+  <div id="joinScreen">
+    <input id="nameInput" placeholder="Enter your name" />
+    <button onclick="joinGame()">Join</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" class="hidden">
+    <h2>Question</h2>
+    <p id="questionText"></p>
+
+    <label>Answer about:</label>
+    <select id="playerSelect"></select>
+
+    <textarea id="answerInput" placeholder="Anonymous answer"></textarea>
+    <button onclick="submitAnswer()">Submit</button>
+  </div>
+
+  <!-- WAIT SCREEN -->
+  <div id="waitScreen" class="hidden">
+    <h2>Submitted ✅</h2>
+    <p>Waiting for other players…</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
