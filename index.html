@@ -1,38 +1,194 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Anonymous Burn Game</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Anonymous Burn Book (Prototype)</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Anonymous Burn Book</h1>
+      <p class="sub">Multiplayer prototype (host + players). Layout-first, looks later.</p>
+    </div>
 
-  <h1>🔥 Anonymous Game 🔥</h1>
+    <div class="status">
+      <div><strong>Room:</strong> <span id="roomLabel">—</span></div>
+      <div><strong>Phase:</strong> <span id="phaseLabel">—</span></div>
+      <div><strong>You:</strong> <span id="meLabel">—</span></div>
+    </div>
+  </header>
 
-  <!-- JOIN SCREEN -->
-  <div id="joinScreen">
-    <input id="nameInput" placeholder="Enter your name" />
-    <button onclick="joinGame()">Join</button>
-  </div>
+  <main class="app">
 
-  <!-- GAME SCREEN -->
-  <div id="gameScreen" class="hidden">
-    <h2>Question</h2>
-    <p id="questionText"></p>
+    <!-- SCREEN: ROLE / ROOM -->
+    <section class="screen" id="screenRoom">
+      <h2>Start / Join</h2>
 
-    <label>Answer about:</label>
-    <select id="playerSelect"></select>
+      <div class="panel grid2">
+        <div class="card">
+          <h3>Host (Game Master)</h3>
+          <p>Creates a room code, starts rounds, reveals pages, awards points.</p>
+          <button id="btnCreateRoom">Create Room</button>
+        </div>
 
-    <textarea id="answerInput" placeholder="Anonymous answer"></textarea>
-    <button onclick="submitAnswer()">Submit</button>
-  </div>
+        <div class="card">
+          <h3>Player</h3>
+          <p>Join a room, answer prompts anonymously, vote & guess.</p>
 
-  <!-- WAIT SCREEN -->
-  <div id="waitScreen" class="hidden">
-    <h2>Submitted ✅</h2>
-    <p>Waiting for other players…</p>
-  </div>
+          <label class="field">
+            <span>Room Code</span>
+            <input id="roomInput" placeholder="e.g. KATE42" maxlength="12" />
+          </label>
 
-  <script src="script.js"></script>
+          <label class="field">
+            <span>Your Name</span>
+            <input id="nameInput" placeholder="e.g. Kate" maxlength="20" />
+          </label>
+
+          <button id="btnJoinRoom">Join Room</button>
+        </div>
+      </div>
+
+      <p class="hint">Tip: To simulate multiple players, open this site in multiple tabs/windows and join the same room code.</p>
+    </section>
+
+
+    <!-- SCREEN: LOBBY -->
+    <section class="screen hidden" id="screenLobby">
+      <div class="screenHeader">
+        <h2>Lobby</h2>
+        <div class="row">
+          <button class="ghost" id="btnLeave">Leave</button>
+          <button class="primary hidden" id="btnStartRound">Start Round (Host)</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Players</h3>
+        <ul id="playerList" class="list"></ul>
+      </div>
+
+      <div class="panel hidden" id="hostSetup">
+        <h3>Round Setup (Host)</h3>
+        <div class="grid2">
+          <label class="field">
+            <span>Questions per player</span>
+            <input id="qPerPlayer" type="number" min="1" max="10" value="4" />
+          </label>
+
+          <label class="field">
+            <span>Reveal order</span>
+            <select id="revealOrder">
+              <option value="join">Join order</option>
+              <option value="random">Random</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint">This prototype uses a default question bank. Later you can make custom decks, colors, filters, etc.</p>
+      </div>
+    </section>
+
+
+    <!-- SCREEN: ANSWERING -->
+    <section class="screen hidden" id="screenAnswer">
+      <div class="screenHeader">
+        <h2>Answer Prompts</h2>
+        <div class="row">
+          <button class="ghost" id="btnBackToLobby">Back to Lobby</button>
+          <button class="primary" id="btnSubmitAnswers">Submit Answers</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <p class="hint">
+          Pick who each prompt is about, write your anonymous answer, then submit all.
+          (Your name will NOT be shown to other players.)
+        </p>
+      </div>
+
+      <div id="questionGrid" class="questionGrid"></div>
+    </section>
+
+
+    <!-- SCREEN: WAITING -->
+    <section class="screen hidden" id="screenWait">
+      <h2>Submitted ✅</h2>
+      <p>Waiting for others…</p>
+      <p><strong>Submitted:</strong> <span id="submittedCount">0</span>/<span id="totalCount">0</span></p>
+
+      <div class="panel hidden" id="hostControlsWait">
+        <h3>Host Controls</h3>
+        <div class="row">
+          <button class="primary" id="btnBeginReveal">Begin Reveal</button>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- SCREEN: REVEAL -->
+    <section class="screen hidden" id="screenReveal">
+      <div class="screenHeader">
+        <h2>Reveal</h2>
+        <div class="row">
+          <button class="ghost hidden" id="btnNextReveal">Next Page (Host)</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Burn Book: <span id="revealName">—</span></h3>
+        <p class="hint">Answers are anonymous. The page owner will pick a favorite & guess who wrote it.</p>
+      </div>
+
+      <div id="revealList" class="revealList"></div>
+
+      <div class="panel hidden" id="ownerActions">
+        <h3>Your turn (page owner)</h3>
+
+        <label class="field">
+          <span>Pick your favorite answer</span>
+          <select id="favoriteSelect"></select>
+        </label>
+
+        <label class="field">
+          <span>Who wrote it?</span>
+          <select id="guessSelect"></select>
+        </label>
+
+        <button class="primary" id="btnLockIn">Lock In</button>
+      </div>
+
+      <div class="panel hidden" id="revealResult">
+        <h3>Result</h3>
+        <p id="resultText">—</p>
+      </div>
+    </section>
+
+
+    <!-- SCREEN: SCORE -->
+    <section class="screen hidden" id="screenScore">
+      <div class="screenHeader">
+        <h2>Scores</h2>
+        <div class="row">
+          <button class="primary hidden" id="btnBackToReveal">Back (Host)</button>
+          <button class="primary hidden" id="btnNewRound">New Round (Host)</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <ul id="scoreList" class="list"></ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p class="hint">
+      Prototype uses BroadcastChannel (same browser / same machine). Later we can swap to Firebase/Supabase for true online multiplayer.
+    </p>
+  </footer>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
