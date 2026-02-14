@@ -1,3 +1,5 @@
+console.log("SCRIPT LOADED");
+
 // app.js (ES module)
 
 // ---------- Question Bank (replace later) ----------
