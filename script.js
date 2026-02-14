@@ -1,6 +1,20 @@
-console.log("SCRIPT LOADED");
+// 🔥 Firebase Setup
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
-// app.js (ES module)
+const firebaseConfig = {
+  apiKey: "AIzaSyADZrx36oil91a58Nzf7MjZ7_1uJD43Xdg",
+  authDomain: "anonymous-roast-room-prototype.firebaseapp.com",
+  databaseURL: "https://anonymous-roast-room-prototype-default-rtdb.firebaseio.com",
+  projectId: "anonymous-roast-room-prototype",
+  storageBucket: "anonymous-roast-room-prototype.firebasestorage.app",
+  messagingSenderId: "227276252448",
+  appId: "1:227276252448:web:08beea9f9f51a4fe0de345"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
 
 // ---------- Question Bank (replace later) ----------
 const QUESTION_BANK = [
