@@ -44,17 +44,39 @@ function shuffle(arr) {
 }
 
 // ---------- Network (same-machine multiplayer) ----------
-let channel = null;
-function openChannel(roomCode) {
-  channel?.close?.();
-  channel = new BroadcastChannel(`burnbook:${roomCode}`);
-  channel.onmessage = (ev) => onMessage(ev.data);
+// ---------- Network (Firebase Multiplayer) ----------
+let roomRef = null;
+let gameRef = null;
+
+function openRoom(roomCode) {
+  me.room = roomCode;
+
+  roomRef = ref(db, `rooms/${roomCode}`);
+  gameRef = ref(db, `rooms/${roomCode}/game`);
+
+  // Listen for game state changes
+  onValue(gameRef, (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    game = data;
+    setTopStatus();
+    render();
+
+    const phase = game?.phase || "lobby";
+    if (phase === "lobby") showScreen("lobby");
+    if (phase === "answering") showScreen("answer");
+    if (phase === "waiting") showScreen("wait");
+    if (phase === "reveal") showScreen("reveal");
+    if (phase === "score") showScreen("score");
+  });
 }
 
-function send(type, payload = {}) {
-  if (!channel) return;
-  channel.postMessage({ type, payload });
+async function writeGame() {
+  if (!gameRef) return;
+  await set(gameRef, game);
 }
+
 
 // ---------- App State ----------
 const me = {
@@ -129,15 +151,18 @@ function setTopStatus() {
 }
 
 // ---------- Host Actions ----------
-function createRoomAsHost() {
+// ---------- Host Actions ----------
+async function createRoomAsHost() {
   const room = randId();
   const hostName = "Host";
+
   me.role = "host";
   me.name = hostName;
-  me.room = room;
 
-  openChannel(room);
+  // Open Firebase room connection
+  openRoom(room);
 
+  // Create initial game state
   game = {
     phase: "lobby",
     hostId: me.id,
@@ -146,9 +171,18 @@ function createRoomAsHost() {
     scores: { [me.id]: 0 }
   };
 
-  broadcastState();
+  // Create room node
+  await set(ref(db, `rooms/${room}`), {
+    createdAt: Date.now()
+  });
+
+  // Save game state to Firebase
+  await writeGame();
+
   render();
   showScreen("lobby");
+}
+
 }
 
 function hostStartRound() {
