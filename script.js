@@ -122,8 +122,8 @@ function openRoom(roomCode) {
   me.room = roomCode;
   gameRef = ref(db, `rooms/${roomCode}/game`);
 
-  // kill prior listener if any
   if (unsubscribe) unsubscribe();
+
   unsubscribe = onValue(gameRef, (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
@@ -132,20 +132,29 @@ function openRoom(roomCode) {
     setTopStatus();
     render();
 
-    // route screen by phase
-    const phase = game?.phase || "lobby";
-    if (phase === "lobby") showScreen("lobby");
-    if (phase === "answering") showScreen("answer");
-    if (phase === "waiting") showScreen("wait");
-    if (phase === "reveal") showScreen("reveal");
-    if (phase === "score") showScreen("score");
+    // 🔥 ONLY route if phase actually exists
+    if (!game.phase) return;
+
+    switch (game.phase) {
+      case "lobby":
+        showScreen("lobby");
+        break;
+      case "answering":
+        showScreen("answer");
+        break;
+      case "waiting":
+        showScreen("wait");
+        break;
+      case "reveal":
+        showScreen("reveal");
+        break;
+      case "score":
+        showScreen("score");
+        break;
+    }
   });
 }
 
-async function writeGame() {
-  if (!gameRef) return;
-  await set(gameRef, game);
-}
 
 // ---------- Host Actions ----------
 async function createRoomAsHost() {
