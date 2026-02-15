@@ -10,7 +10,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY", // <-- replace with your real key
+  apiKey: "AIzaSyADZrx36oil91a58Nzf7MjZ7_1uJD43Xdg",
   authDomain: "anonymous-roast-room-prototype.firebaseapp.com",
   databaseURL: "https://anonymous-roast-room-prototype-default-rtdb.firebaseio.com",
   projectId: "anonymous-roast-room-prototype",
@@ -21,6 +21,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
 
 // ---------- Utilities ----------
 const $ = (id) => document.getElementById(id);
@@ -201,9 +202,21 @@ async function hostStartRound() {
 
 async function hostBeginReveal() {
   if (!isHost()) return;
+  if (!game?.round) return;
+
+  const total = game.players.length;
+  const submitted = game.round.submittedPlayerIds?.length ?? 0;
+
+  if (submitted < total) {
+    return alert(`Not everyone has submitted yet (${submitted}/${total}).`);
+  }
+
   game.phase = "reveal";
+  game.round.revealIndex = 0;
+
   await writeGame();
 }
+
 
 async function hostNextReveal() {
   if (!isHost()) return;
@@ -456,12 +469,21 @@ function renderAnswering() {
 function renderWaiting() {
   if (!game?.round) return;
 
-  $("submittedCount").textContent = game.round.submittedPlayerIds?.length ?? 0;
-  $("totalCount").textContent = game.players.length;
+  const submitted = game.round.submittedPlayerIds?.length ?? 0;
+  const total = game.players.length;
 
-  const allSubmitted = (game.round.submittedPlayerIds?.length ?? 0) >= game.players.length;
+  $("submittedCount").textContent = submitted;
+  $("totalCount").textContent = total;
+
+  const allSubmitted = submitted >= total;
+
+  // show host controls only to host
+  $("hostControlsWait").classList.toggle("hidden", !isHost());
+
+  // enable reveal only when ready
   $("btnBeginReveal").disabled = !(isHost() && allSubmitted);
 }
+
 
 function renderReveal() {
   if (!game?.round) return;
