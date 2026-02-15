@@ -526,16 +526,17 @@ function renderReveal() {
     block.innerHTML = `
       <h4>${escapeHtml(q?.color ?? "Prompt")} — ${escapeHtml(q?.text ?? "")}</h4>
       <div>${escapeHtml(s.text)}</div>
-      <div class="badge">Submission ID: ${s.id}</div>
     `;
     list.appendChild(block);
   });
 
-  // owner controls
-  const isOwner = me.id === aboutId;
-  $("ownerActions").classList.toggle("hidden", !isOwner);
+// owner controls
+const isOwner = me.id === aboutId;
+$("ownerActions").classList.toggle("hidden", !isOwner);
 
-  if (isOwner) {
+const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
+
+if (isOwner) {
   const options =
     `<option value="">Select…</option>` +
     subs.map((s, idx) =>
@@ -546,6 +547,19 @@ function renderReveal() {
   $("creativeSelect").innerHTML = options;
 }
 
+// show result after lock-in
+const lock = r.locks?.[aboutId];
+const resultPanel = $("revealResult");
+
+if (lock?.resolved) {
+  $("resultText").textContent =
+    `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
+
+  resultPanel.classList.remove("hidden");
+} else {
+  resultPanel.classList.add("hidden");
+  $("resultText").textContent = "—";
+}
 
   // show result after lock-in
   const lock = r.locks?.[aboutId];
