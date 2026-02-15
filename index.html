@@ -127,44 +127,45 @@
     </section>
 
 
-    <!-- SCREEN: REVEAL -->
-    <section class="screen hidden" id="screenReveal">
-      <div class="screenHeader">
-        <h2>Reveal</h2>
-        <div class="row">
-          <button class="ghost hidden" id="btnNextReveal">Next Page (Host)</button>
-        </div>
-      </div>
+   <!-- SCREEN: REVEAL -->
+<section class="screen hidden" id="screenReveal">
+  <div class="screenHeader">
+    <h2>Reveal</h2>
+    <div class="row">
+      <button class="ghost hidden" id="btnNextReveal">Next Page (Host)</button>
+    </div>
+  </div>
 
-      <div class="panel">
-        <h3>Burn Book: <span id="revealName">—</span></h3>
-        <p class="hint">Answers are anonymous. The page owner will pick a favorite & guess who wrote it.</p>
-      </div>
+  <div class="panel">
+    <h3>Burn Book: <span id="revealName">—</span></h3>
+    <p class="hint">
+      Answers are anonymous. The page owner will pick a favorite and the most creative response.
+    </p>
+  </div>
 
-      <div id="revealList" class="revealList"></div>
+  <div id="revealList" class="revealList"></div>
 
-      <div class="panel hidden" id="ownerActions">
-        <h3>Your turn (page owner)</h3>
+  <div class="panel hidden" id="ownerActions">
+    <h3>Your turn (page owner)</h3>
 
-        <label class="field">
-          <span>Pick your favorite answer</span>
-          <select id="favoriteSelect"></select>
-        </label>
+    <label class="field">
+      <span>Pick your favorite answer</span>
+      <select id="favoriteSelect"></select>
+    </label>
 
-        <label class="field">
-          <span>Who wrote it?</span>
-          <select id="guessSelect"></select>
-        </label>
+    <label class="field">
+      <span>Which answer was the most creative?</span>
+      <select id="creativeSelect"></select>
+    </label>
 
-        <button class="primary" id="btnLockIn">Lock In</button>
-      </div>
+    <button class="primary" id="btnLockIn">Lock In</button>
+  </div>
 
-      <div class="panel hidden" id="revealResult">
-        <h3>Result</h3>
-        <p id="resultText">—</p>
-      </div>
-    </section>
-
+  <div class="panel hidden" id="revealResult">
+    <h3>Result</h3>
+    <p id="resultText">—</p>
+  </div>
+</section>
 
     <!-- SCREEN: SCORE -->
     <section class="screen hidden" id="screenScore">

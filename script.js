@@ -536,39 +536,39 @@ function renderReveal() {
   $("ownerActions").classList.toggle("hidden", !isOwner);
 
   if (isOwner) {
-    $("favoriteSelect").innerHTML =
-      `<option value="">Select…</option>` +
-      subs.map((s, idx) =>
-        `<option value="${s.id}">Answer ${idx + 1}: ${escapeHtml(truncate(s.text, 42))}</option>`
-      ).join("");
+  const options =
+    `<option value="">Select…</option>` +
+    subs.map((s, idx) =>
+      `<option value="${s.id}">Answer ${idx + 1}: ${escapeHtml(truncate(s.text, 42))}</option>`
+    ).join("");
 
-    $("guessSelect").innerHTML =
-      `<option value="">Select…</option>` +
-      game.players
-        .filter(p => p.id !== aboutId)
-        .map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
-        .join("");
-  }
+  $("favoriteSelect").innerHTML = options;
+  $("creativeSelect").innerHTML = options;
+}
+
 
   // show result after lock-in
   const lock = r.locks?.[aboutId];
   const resultPanel = $("revealResult");
 
-  if (lock?.resolved) {
-    const writer = game.players.find(p => p.id === lock.writerId);
-    const guess = game.players.find(p => p.id === lock.guessAuthorId);
+ if (lock?.resolved) {
 
-    $("resultText").textContent = lock.correct
-      ? `Correct! You guessed ${guess?.name}. Writer was ${writer?.name}. Points awarded.`
-      : `Not quite. You guessed ${guess?.name}, but writer was ${writer?.name}.`;
+  const favorite = r.submissions.find(s => s.id === lock.favoriteSubmissionId);
+  const creative = r.submissions.find(s => s.id === lock.creativeSubmissionId);
 
-    resultPanel.classList.remove("hidden");
-  } else {
-    resultPanel.classList.add("hidden");
-    $("resultText").textContent = "—";
-  }
+  const favoriteWriter = game.players.find(p => p.id === favorite?.authorId);
+  const creativeWriter = game.players.find(p => p.id === creative?.authorId);
+
+  $("resultText").textContent =
+    `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
+
+  resultPanel.classList.remove("hidden");
+
+} else {
+  resultPanel.classList.add("hidden");
+  $("resultText").textContent = "—";
 }
-
+}
 function renderScore() {
   if (!game) return;
 
