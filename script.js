@@ -63,6 +63,7 @@ async function writeGame() {
 // ---------- Create Room ----------
 async function createRoomAsHost() {
   const room = randId();
+
   me.role = "host";
   me.name = "Host";
 
@@ -71,13 +72,21 @@ async function createRoomAsHost() {
   game = {
     phase: "lobby",
     hostId: me.id,
-    players: [{ id: me.id, name: me.name }],
+    players: [{
+      id: me.id,
+      name: me.name,
+      joinedAt: Date.now()
+    }],
     round: null,
-    scores: { [me.id]: 0 }
+    scores: {
+      [me.id]: 0
+    }
   };
 
   await writeGame();
-  alert("Room Code: " + room);
+
+  showScreen("lobby");   // 🔥 THIS WAS MISSING
+  setTopStatus();        // 🔥 update header
 }
 
 // ---------- Join Room ----------
