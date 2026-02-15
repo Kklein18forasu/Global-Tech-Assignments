@@ -154,7 +154,11 @@ function openRoom(roomCode) {
     }
   });
 }
-
+  
+async function writeGame() {
+  if (!gameRef) return;
+  await set(gameRef, game);
+}
 
 // ---------- Host Actions ----------
 async function createRoomAsHost() {
@@ -354,7 +358,7 @@ async function submitMyAnswers() {
 
   return cur;
 });
-
+}
 
 // ---------- Owner Lock-In ----------
 async function ownerLockIn() {
@@ -523,7 +527,7 @@ function renderReveal() {
     `;
     list.appendChild(block);
   });
-}
+
   // owner controls
   const isOwner = me.id === aboutId;
   $("ownerActions").classList.toggle("hidden", !isOwner);
