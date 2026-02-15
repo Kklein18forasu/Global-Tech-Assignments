@@ -523,7 +523,7 @@ function renderReveal() {
     `;
     list.appendChild(block);
   });
-
+}
   // owner controls
   const isOwner = me.id === aboutId;
   $("ownerActions").classList.toggle("hidden", !isOwner);
