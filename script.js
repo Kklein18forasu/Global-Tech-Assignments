@@ -583,7 +583,6 @@ function renderReveal() {
   resultPanel.classList.add("hidden");
   $("resultText").textContent = "—";
 }
-}
 function renderScore() {
   if (!game) return;
 
