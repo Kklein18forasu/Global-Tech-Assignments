@@ -516,6 +516,7 @@ function renderReveal() {
   const list = $("revealList");
   list.innerHTML = "";
 
+  // ✅ Only declare subs ONCE
   const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
   const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
 
@@ -530,36 +531,36 @@ function renderReveal() {
     list.appendChild(block);
   });
 
-// owner controls
-const isOwner = me.id === aboutId;
-$("ownerActions").classList.toggle("hidden", !isOwner);
+  // owner controls
+  const isOwner = me.id === aboutId;
+  $("ownerActions").classList.toggle("hidden", !isOwner);
 
-const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
+  if (isOwner) {
+    const options =
+      `<option value="">Select…</option>` +
+      subs.map((s, idx) =>
+        `<option value="${s.id}">Answer ${idx + 1}: ${escapeHtml(truncate(s.text, 42))}</option>`
+      ).join("");
 
-if (isOwner) {
-  const options =
-    `<option value="">Select…</option>` +
-    subs.map((s, idx) =>
-      `<option value="${s.id}">Answer ${idx + 1}: ${escapeHtml(truncate(s.text, 42))}</option>`
-    ).join("");
+    $("favoriteSelect").innerHTML = options;
+    $("creativeSelect").innerHTML = options;
+  }
 
-  $("favoriteSelect").innerHTML = options;
-  $("creativeSelect").innerHTML = options;
+  // show result after lock-in
+  const lock = r.locks?.[aboutId];
+  const resultPanel = $("revealResult");
+
+  if (lock?.resolved) {
+    $("resultText").textContent =
+      `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
+
+    resultPanel.classList.remove("hidden");
+  } else {
+    resultPanel.classList.add("hidden");
+    $("resultText").textContent = "—";
+  }
 }
 
-// show result after lock-in
-const lock = r.locks?.[aboutId];
-const resultPanel = $("revealResult");
-
-if (lock?.resolved) {
-  $("resultText").textContent =
-    `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
-
-  resultPanel.classList.remove("hidden");
-} else {
-  resultPanel.classList.add("hidden");
-  $("resultText").textContent = "—";
-}
 
   // show result after lock-in
   const lock = r.locks?.[aboutId];
