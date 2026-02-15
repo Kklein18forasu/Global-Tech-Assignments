@@ -166,8 +166,7 @@ async function createRoomAsHost() {
   await writeGame();
 
   setTopStatus();
-  render();
-  showScreen("lobby");
+
 
   // helpful UX
   alert(`Room created! Code: ${room}`);
