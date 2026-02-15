@@ -130,9 +130,8 @@ function openRoom(roomCode) {
 
     game = data;
     setTopStatus();
-    render();
 
-    // 🔥 ONLY route if phase actually exists
+    // 🔥 Route FIRST
     if (!game.phase) return;
 
     switch (game.phase) {
@@ -152,13 +151,17 @@ function openRoom(roomCode) {
         showScreen("score");
         break;
     }
+
+    // 🔥 THEN render
+    render();
   });
 }
-  
+
 async function writeGame() {
   if (!gameRef) return;
   await set(gameRef, game);
 }
+
 
 // ---------- Host Actions ----------
 async function createRoomAsHost() {
