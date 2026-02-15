@@ -323,26 +323,29 @@ async function submitMyAnswers() {
   }
 
   // transaction: append submissions safely
-  await runTransaction(gameRef, (cur) => {
-    if (!cur?.round) return cur;
+ await runTransaction(gameRef, (cur) => {
+  if (!cur?.round) return cur;
 
-    cur.round.submissions ??= [];
-    cur.round.submittedPlayerIds ??= [];
+  cur.round.submissions ??= [];
+  cur.round.submittedPlayerIds ??= [];
 
-    // prevent double submit
-    if (cur.round.submittedPlayerIds.includes(me.id)) return cur;
+  // prevent double submit
+  if (cur.round.submittedPlayerIds.includes(me.id)) return cur;
 
-    cur.round.submissions.push(...my);
-    cur.round.submittedPlayerIds.push(me.id);
+  cur.round.submissions.push(...my);
+  cur.round.submittedPlayerIds.push(me.id);
 
-    // once anyone submits, show waiting; host will begin reveal when all submitted
+  const totalPlayers = cur.players?.length ?? 0;
+  const submitted = cur.round.submittedPlayerIds.length;
+
+  // Only move to waiting if ALL players submitted
+  if (submitted >= totalPlayers) {
     cur.phase = "waiting";
+  }
 
-    return cur;
-  });
+  return cur;
+});
 
-  showScreen("wait");
-}
 
 // ---------- Owner Lock-In ----------
 async function ownerLockIn() {
