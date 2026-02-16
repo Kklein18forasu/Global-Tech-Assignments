@@ -371,10 +371,11 @@ async function ownerLockIn() {
   if (aboutId !== me.id) return;
 
   const favoriteSubmissionId = $("favoriteSelect").value;
-  const guessAuthorId = $("creativeSelect")).value;
+  const creativeSubmissionId = $("creativeSelect").value;
 
-  if (!favoriteSubmissionId || !guessAuthorId) {
-    return alert("Pick a favorite and a guess.");
+
+  if (!favoriteSubmissionId || !creativeSubmissionId) {
+    return alert("Pick a favorite and a creative submission.");
   }
 
   await runTransaction(gameRef, (cur) => {
@@ -388,62 +389,26 @@ async function ownerLockIn() {
     if (r.locks[aboutId]?.resolved) return cur;
 
     const fav = (r.submissions ?? []).find(s => s.id === favoriteSubmissionId);
-    if (!fav) return cur;
+const creative = (r.submissions ?? []).find(s => s.id === creativeSubmissionId);
 
-    const correct = fav.authorId === guessAuthorId;
+if (!fav || !creative) return cur;
 
-    // scoring: if correct, page owner + writer each get +1
-    if (correct) {
-      cur.scores[aboutId] = (cur.scores[aboutId] ?? 0) + 1;
-      cur.scores[fav.authorId] = (cur.scores[fav.authorId] ?? 0) + 1;
-    }
+// Favorite gets +1
+cur.scores[fav.authorId] = (cur.scores[fav.authorId] ?? 0) + 1;
 
-    r.locks[aboutId] = {
-      favoriteSubmissionId,
-      guessAuthorId,
-      resolved: true,
-      correct,
-      writerId: fav.authorId
-    };
+// Creative gets +1
+cur.scores[creative.authorId] = (cur.scores[creative.authorId] ?? 0) + 1;
+
+r.locks[aboutId] = {
+  favoriteSubmissionId,
+  creativeSubmissionId,
+  resolved: true
+};
 
     return cur;
   });
 }
 
-// ---------- Rendering ----------
-function render() {
-  if (!game) return;
-
-  renderLobby();
-  renderAnswering();
-  renderWaiting();
-  renderReveal();
-  renderScore();
-
-  // host-only UI
-  $("btnStartRound").classList.toggle("hidden", !isHost());
-  $("hostSetup").classList.toggle("hidden", !isHost());
-  $("hostControlsWait").classList.toggle("hidden", !isHost());
-  $("btnNextReveal").classList.toggle("hidden", !isHost());
-  $("btnBackToReveal").classList.toggle("hidden", !isHost());
-  $("btnNewRound").classList.toggle("hidden", !isHost());
-}
-
-function renderLobby() {
-  if (!game) return;
-
-  const ul = $("playerList");
-  ul.innerHTML = "";
-
-  game.players
-    .slice()
-    .sort((a, b) => a.joinedAt - b.joinedAt)
-    .forEach((p, idx) => {
-      const li = document.createElement("li");
-      li.innerHTML = `<span>${idx + 1}. ${escapeHtml(p.name)}</span><span class="badge">${p.id}</span>`;
-      ul.appendChild(li);
-    });
-}
 function renderReveal() {
   if (!game?.round) return;
 
@@ -459,7 +424,6 @@ function renderReveal() {
 
   // Only answers ABOUT this player
   const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
-
   const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
 
   subs.forEach(s => {
@@ -473,9 +437,7 @@ function renderReveal() {
     list.appendChild(block);
   });
 
-  // --------------------
   // Owner controls
-  // --------------------
   const isOwner = me.id === aboutId;
   $("ownerActions").classList.toggle("hidden", !isOwner);
 
@@ -490,43 +452,7 @@ function renderReveal() {
     $("creativeSelect").innerHTML = options;
   }
 
-  // --------------------
-  // Result panel
-  // --------------------
-  const lock = r.locks?.[aboutId];
-  const resultPanel = $("revealResult");
-
-  if (lock?.resolved) {
-    $("resultText").textContent =
-      `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
-
-    resultPanel.classList.remove("hidden");
-  } else {
-    resultPanel.classList.add("hidden");
-    $("resultText").textContent = "—";
-  }
-}
-
-  // -------------------------
-  // Owner controls
-  // -------------------------
-  const isOwner = me.id === aboutId;
-  $("ownerActions").classList.toggle("hidden", !isOwner);
-
-  if (isOwner) {
-    const options =
-      `<option value="">Select…</option>` +
-      subs.map((s, idx) =>
-        `<option value="${s.id}">Answer ${idx + 1}: ${escapeHtml(truncate(s.text, 42))}</option>`
-      ).join("");
-
-    $("favoriteSelect").innerHTML = options;
-    $("creativeSelect").innerHTML = options;
-  }
-
-  // -------------------------
   // Result display
-  // -------------------------
   const lock = r.locks?.[aboutId];
   const resultPanel = $("revealResult");
 
@@ -540,74 +466,74 @@ function renderReveal() {
     $("resultText").textContent = "—";
   }
 }
+function renderLobby() {
+  if (!game) return;
 
-  // ✅ Only declare subs ONCE
-  const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
-  const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
+  const ul = $("playerList");
+  ul.innerHTML = "";
 
-  subs.forEach(s => {
-    const q = qById.get(s.questionId);
-    const block = document.createElement("div");
-    block.className = "answerBlock";
-    block.innerHTML = `
-      <h4>${escapeHtml(q?.color ?? "Prompt")} — ${escapeHtml(q?.text ?? "")}</h4>
-      <div>${escapeHtml(s.text)}</div>
+  game.players
+    .slice()
+    .sort((a, b) => a.joinedAt - b.joinedAt)
+    .forEach((p, idx) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<span>${idx + 1}. ${escapeHtml(p.name)}</span>`;
+      ul.appendChild(li);
+    });
+}
+
+function renderAnswering() {
+  if (!game?.round) return;
+
+  const r = game.round;
+  const grid = $("questionGrid");
+  grid.innerHTML = "";
+
+  const targetOptions = game.players
+    .map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
+    .join("");
+
+  r.questions.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.className = "qCard";
+    div.setAttribute("data-qblock", "true");
+    div.setAttribute("data-questionid", q.id);
+
+    div.innerHTML = `
+      <div class="qMeta">
+        <strong>Prompt ${i + 1}</strong>
+        <span class="badge">${escapeHtml(q.color)}</span>
+      </div>
+      <p>${escapeHtml(q.text)}</p>
+
+      <label class="field">
+        <span>Answer about</span>
+        <select>${targetOptions}</select>
+      </label>
+
+      <label class="field">
+        <span>Anonymous answer</span>
+        <textarea placeholder="Type your answer…"></textarea>
+      </label>
     `;
-    list.appendChild(block);
+
+    grid.appendChild(div);
   });
-
-  // owner controls
-  const isOwner = me.id === aboutId;
-  $("ownerActions").classList.toggle("hidden", !isOwner);
-
-  if (isOwner) {
-    const options =
-      `<option value="">Select…</option>` +
-      subs.map((s, idx) =>
-        `<option value="${s.id}">Answer ${idx + 1}: ${escapeHtml(truncate(s.text, 42))}</option>`
-      ).join("");
-
-    $("favoriteSelect").innerHTML = options;
-    $("creativeSelect").innerHTML = options;
-  }
-
-  // show result after lock-in
-  const lock = r.locks?.[aboutId];
-  const resultPanel = $("revealResult");
-
-  if (lock?.resolved) {
-    $("resultText").textContent =
-      `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
-
-    resultPanel.classList.remove("hidden");
-  } else {
-    resultPanel.classList.add("hidden");
-    $("resultText").textContent = "—";
-  }
 }
 
+function renderWaiting() {
+  if (!game?.round) return;
 
-  // show result after lock-in
-  const lock = r.locks?.[aboutId];
-  const resultPanel = $("revealResult");
+  const submitted = game.round.submittedPlayerIds?.length ?? 0;
+  const total = game.players.length;
 
- if (lock?.resolved) {
+  $("submittedCount").textContent = submitted;
+  $("totalCount").textContent = total;
 
-  const favorite = r.submissions.find(s => s.id === lock.favoriteSubmissionId);
-  const creative = r.submissions.find(s => s.id === lock.creativeSubmissionId);
-
-  const favoriteWriter = game.players.find(p => p.id === favorite?.authorId);
-  const creativeWriter = game.players.find(p => p.id === creative?.authorId);
-
-  $("resultText").textContent =
-    `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
-
-  resultPanel.classList.remove("hidden");
-
-} else {
-  resultPanel.classList.add("hidden");
-  $("resultText").textContent = "—";
+  $("hostControlsWait").classList.toggle("hidden", !isHost());
+  $("btnBeginReveal").disabled = !(isHost() && submitted >= total);
 }
+
 function renderScore() {
   if (!game) return;
 
@@ -615,7 +541,7 @@ function renderScore() {
   ul.innerHTML = "";
 
   const rows = game.players
-    .map(p => ({ name: p.name, id: p.id, score: game.scores?.[p.id] ?? 0 }))
+    .map(p => ({ name: p.name, score: game.scores?.[p.id] ?? 0 }))
     .sort((a, b) => b.score - a.score);
 
   rows.forEach((r, idx) => {
@@ -625,6 +551,22 @@ function renderScore() {
   });
 }
 
+function render() {
+  if (!game) return;
+
+  renderLobby();
+  renderAnswering();
+  renderWaiting();
+  renderReveal();
+  renderScore();
+
+  $("btnStartRound").classList.toggle("hidden", !isHost());
+  $("hostSetup").classList.toggle("hidden", !isHost());
+  $("hostControlsWait").classList.toggle("hidden", !isHost());
+  $("btnNextReveal").classList.toggle("hidden", !isHost());
+  $("btnBackToReveal").classList.toggle("hidden", !isHost());
+  $("btnNewRound").classList.toggle("hidden", !isHost());
+}
 // ---------- Buttons ----------
 $("btnCreateRoom").addEventListener("click", createRoomAsHost);
 $("btnJoinRoom").addEventListener("click", joinRoomAsPlayer);
@@ -640,8 +582,6 @@ $("btnNextReveal").addEventListener("click", hostNextReveal);
 $("btnLockIn").addEventListener("click", ownerLockIn);
 $("btnNewRound").addEventListener("click", hostStartRound);
 $("btnBackToReveal").addEventListener("click", () => setPhase("reveal"));
-
-// ---------- Boot ----------
 function boot() {
   showScreen("room");
   setTopStatus();
