@@ -371,7 +371,7 @@ async function ownerLockIn() {
   if (aboutId !== me.id) return;
 
   const favoriteSubmissionId = $("favoriteSelect").value;
-  const guessAuthorId = $("guessSelect").value;
+  const guessAuthorId = $("creativeSelect")).value;
 
   if (!favoriteSubmissionId || !guessAuthorId) {
     return alert("Pick a favorite and a guess.");
@@ -444,65 +444,6 @@ function renderLobby() {
       ul.appendChild(li);
     });
 }
-
-function renderAnswering() {
-  if (!game?.round) return;
-
-  const r = game.round;
-  const grid = $("questionGrid");
-  grid.innerHTML = "";
-
-  const targetOptions = game.players
-    .map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
-    .join("");
-
-  r.questions.forEach((q, i) => {
-    const div = document.createElement("div");
-    div.className = "qCard";
-    div.setAttribute("data-qblock", "true");
-    div.setAttribute("data-questionid", q.id);
-
-    div.innerHTML = `
-      <div class="qMeta">
-        <strong>Prompt ${i + 1}</strong>
-        <span class="badge">${escapeHtml(q.color)}</span>
-      </div>
-      <p>${escapeHtml(q.text)}</p>
-
-      <label class="field">
-        <span>Answer about</span>
-        <select>${targetOptions}</select>
-      </label>
-
-      <label class="field">
-        <span>Anonymous answer</span>
-        <textarea placeholder="Type your answer…"></textarea>
-      </label>
-    `;
-
-    grid.appendChild(div);
-  });
-}
-
-function renderWaiting() {
-  if (!game?.round) return;
-
-  const submitted = game.round.submittedPlayerIds?.length ?? 0;
-  const total = game.players.length;
-
-  $("submittedCount").textContent = submitted;
-  $("totalCount").textContent = total;
-
-  const allSubmitted = submitted >= total;
-
-  // show host controls only to host
-  $("hostControlsWait").classList.toggle("hidden", !isHost());
-
-  // enable reveal only when ready
-  $("btnBeginReveal").disabled = !(isHost() && allSubmitted);
-}
-
-
 function renderReveal() {
   if (!game?.round) return;
 
@@ -515,6 +456,90 @@ function renderReveal() {
 
   const list = $("revealList");
   list.innerHTML = "";
+
+  // Only answers ABOUT this player
+  const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
+
+  const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
+
+  subs.forEach(s => {
+    const q = qById.get(s.questionId);
+    const block = document.createElement("div");
+    block.className = "answerBlock";
+    block.innerHTML = `
+      <h4>${escapeHtml(q?.color ?? "Prompt")} — ${escapeHtml(q?.text ?? "")}</h4>
+      <div>${escapeHtml(s.text)}</div>
+    `;
+    list.appendChild(block);
+  });
+
+  // --------------------
+  // Owner controls
+  // --------------------
+  const isOwner = me.id === aboutId;
+  $("ownerActions").classList.toggle("hidden", !isOwner);
+
+  if (isOwner) {
+    const options =
+      `<option value="">Select…</option>` +
+      subs.map((s, idx) =>
+        `<option value="${s.id}">Answer ${idx + 1}: ${escapeHtml(truncate(s.text, 42))}</option>`
+      ).join("");
+
+    $("favoriteSelect").innerHTML = options;
+    $("creativeSelect").innerHTML = options;
+  }
+
+  // --------------------
+  // Result panel
+  // --------------------
+  const lock = r.locks?.[aboutId];
+  const resultPanel = $("revealResult");
+
+  if (lock?.resolved) {
+    $("resultText").textContent =
+      `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
+
+    resultPanel.classList.remove("hidden");
+  } else {
+    resultPanel.classList.add("hidden");
+    $("resultText").textContent = "—";
+  }
+}
+
+  // -------------------------
+  // Owner controls
+  // -------------------------
+  const isOwner = me.id === aboutId;
+  $("ownerActions").classList.toggle("hidden", !isOwner);
+
+  if (isOwner) {
+    const options =
+      `<option value="">Select…</option>` +
+      subs.map((s, idx) =>
+        `<option value="${s.id}">Answer ${idx + 1}: ${escapeHtml(truncate(s.text, 42))}</option>`
+      ).join("");
+
+    $("favoriteSelect").innerHTML = options;
+    $("creativeSelect").innerHTML = options;
+  }
+
+  // -------------------------
+  // Result display
+  // -------------------------
+  const lock = r.locks?.[aboutId];
+  const resultPanel = $("revealResult");
+
+  if (lock?.resolved) {
+    $("resultText").textContent =
+      `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
+
+    resultPanel.classList.remove("hidden");
+  } else {
+    resultPanel.classList.add("hidden");
+    $("resultText").textContent = "—";
+  }
+}
 
   // ✅ Only declare subs ONCE
   const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
