@@ -208,7 +208,8 @@ async function hostStartRound() {
     submittedPlayerIds: [],
     revealQueue: queue,
     revealIndex: 0,
-    locks: {}
+    locks: {},
+    activePlayerIds: players.map(p => p.id),
   };
 
   game.phase = "answering";
@@ -351,13 +352,12 @@ async function submitMyAnswers() {
   cur.round.submissions.push(...my);
   cur.round.submittedPlayerIds.push(me.id);
 
-  const totalPlayers = cur.players?.length ?? 0;
+  const totalPlayers = cur.round.activePlayerIds?.length ?? 0;
   const submitted = cur.round.submittedPlayerIds.length;
 
-  // Only move to waiting if ALL players submitted
-  if (submitted >= totalPlayers) {
-    cur.phase = "waiting";
-  }
+  // Move to waiting as soon as someone submits
+cur.phase = "waiting";
+
 
   return cur;
 });
