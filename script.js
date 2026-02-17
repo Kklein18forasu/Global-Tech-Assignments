@@ -53,6 +53,15 @@ function clampNumber(val, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
+function getRoundKey(r) {
+  if (!r) return null;
+
+  const ids = (r.questions ?? []).map(q => q.id).join("|");
+  const qpp = r.qPerPlayer ?? 0;
+
+  return `${qpp}:${ids}`;
+}
+
 // ---------- Question Bank ----------
 const QUESTION_BANK = [
   { id: "red-1", color: "Red", text: "Who would be their dream teacher (and what would they teach)?" },
@@ -76,6 +85,9 @@ const me = {
 let game = null;
 let gameRef = null;
 let unsubscribe = null;
+
+let answeringUiRoundKey = null;
+let draftAnswersByQid = new Map();
 
 // ---------- Screens + Header UI (matches your HTML) ----------
 const screens = {
@@ -318,26 +330,26 @@ function leaveRoom() {
 async function submitMyAnswers() {
   if (!game?.round) return;
 
-  const blocks = document.querySelectorAll("[data-qblock]");
-  const my = [];
+ const my = [];
 
-  for (const b of blocks) {
-    const questionId = b.getAttribute("data-questionid");
-    const aboutId = b.querySelector("select")?.value;
-    const text = b.querySelector("textarea")?.value?.trim();
+for (const q of (game.round.questions ?? [])) {
+  const draft = draftAnswersByQid.get(q.id);
+  const aboutId = draft?.aboutId;
+  const text = draft?.text?.trim();
 
-    if (!aboutId || !text) {
-      return alert("Please fill every prompt before submitting.");
-    }
-
-    my.push({
-      id: randId(),
-      authorId: me.id,
-      aboutId,
-      questionId,
-      text
-    });
+  if (!aboutId || !text) {
+    return alert("Please fill every prompt before submitting.");
   }
+
+  my.push({
+    id: randId(),
+    authorId: me.id,
+    aboutId,
+    questionId: q.id,
+    text
+  });
+}
+
 
   // transaction: append submissions safely
  await runTransaction(gameRef, (cur) => {
@@ -484,9 +496,22 @@ function renderLobby() {
 
 function renderAnswering() {
   if (!game?.round) return;
+  if (game.phase !== "answering") return;
 
   const r = game.round;
   const grid = $("questionGrid");
+
+  const roundKey = getRoundKey(r);
+
+  // 🔥 If we already built this round's UI, do nothing
+  if (answeringUiRoundKey === roundKey) {
+    return;
+  }
+
+  // New round detected — build UI once
+  answeringUiRoundKey = roundKey;
+  draftAnswersByQid.clear();
+
   grid.innerHTML = "";
 
   const targetOptions = game.players
@@ -517,9 +542,26 @@ function renderAnswering() {
       </label>
     `;
 
+    const select = div.querySelector("select");
+    const textarea = div.querySelector("textarea");
+
+    // Save draft locally when user interacts
+    select.addEventListener("change", () => {
+      const cur = draftAnswersByQid.get(q.id) ?? { aboutId: "", text: "" };
+      cur.aboutId = select.value;
+      draftAnswersByQid.set(q.id, cur);
+    });
+
+    textarea.addEventListener("input", () => {
+      const cur = draftAnswersByQid.get(q.id) ?? { aboutId: "", text: "" };
+      cur.text = textarea.value;
+      draftAnswersByQid.set(q.id, cur);
+    });
+
     grid.appendChild(div);
   });
 }
+
 
 function renderWaiting() {
   if (!game?.round) return;
