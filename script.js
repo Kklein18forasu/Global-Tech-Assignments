@@ -466,19 +466,37 @@ function renderReveal() {
     $("creativeSelect").innerHTML = options;
   }
 
-  // Result display
-  const lock = r.locks?.[aboutId];
-  const resultPanel = $("revealResult");
+ // Result display
+const lock = r.locks?.[aboutId];
+const resultPanel = $("revealResult");
 
-  if (lock?.resolved) {
-    $("resultText").textContent =
-      `⭐ Favorite selected. 🎨 Most Creative selected. Points awarded!`;
+if (lock?.resolved) {
+  const fav = r.submissions.find(s => s.id === lock.favoriteSubmissionId);
+  const creative = r.submissions.find(s => s.id === lock.creativeSubmissionId);
 
-    resultPanel.classList.remove("hidden");
-  } else {
-    resultPanel.classList.add("hidden");
-    $("resultText").textContent = "—";
+  const favAuthor = game.players.find(p => p.id === fav?.authorId);
+  const creativeAuthor = game.players.find(p => p.id === creative?.authorId);
+
+  let message = "";
+
+  if (favAuthor) {
+    message += `⭐ Favorite: ${favAuthor.name} (+1)\n`;
   }
+
+  if (creativeAuthor) {
+    message += `🎨 Most Creative: ${creativeAuthor.name} (+1)\n`;
+  }
+
+  if (favAuthor?.id === me.id || creativeAuthor?.id === me.id) {
+    message += `\nYou earned point(s)! 🎉`;
+  }
+
+  $("resultText").textContent = message;
+  resultPanel.classList.remove("hidden");
+} else {
+  resultPanel.classList.add("hidden");
+  $("resultText").textContent = "—";
+}
 }
 function renderLobby() {
   if (!game) return;
