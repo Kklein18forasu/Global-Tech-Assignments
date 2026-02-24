@@ -153,9 +153,6 @@ function openRoom(roomCode) {
       case "answering":
         showScreen("answer");
         break;
-      case "waiting":
-        showScreen("wait");
-        break;
       case "reveal":
         showScreen("reveal");
         break;
@@ -163,7 +160,14 @@ function openRoom(roomCode) {
         showScreen("score");
         break;
     }
+    
+// ✅ Local waiting logic
+if (game.phase === "answering") {
+  const hasSubmitted =
+    game.round?.submittedPlayerIds?.includes(me.id);
 
+  showScreen(hasSubmitted ? "wait" : "answer");
+}
     // 🔥 THEN render
     render();
   });
@@ -355,6 +359,9 @@ for (const q of (game.round.questions ?? [])) {
  await runTransaction(gameRef, (cur) => {
   if (!cur?.round) return cur;
 
+  // 🔒 Guard: only allow submit during answering phase
+  if (cur.phase !== "answering") return cur;
+
   cur.round.submissions ??= [];
   cur.round.submittedPlayerIds ??= [];
 
@@ -364,12 +371,7 @@ for (const q of (game.round.questions ?? [])) {
   cur.round.submissions.push(...my);
   cur.round.submittedPlayerIds.push(me.id);
 
-  const totalPlayers = cur.round.activePlayerIds?.length ?? 0;
-  const submitted = cur.round.submittedPlayerIds.length;
-
-  // Move to waiting as soon as someone submits
-cur.phase = "waiting";
-
+  // ❌ DO NOT change cur.phase here
 
   return cur;
 });
