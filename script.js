@@ -546,7 +546,12 @@ function renderAnswering() {
 
     const select = div.querySelector("select");
     const textarea = div.querySelector("textarea");
-
+    
+// 🔥 Initialize draft immediately with default dropdown value
+draftAnswersByQid.set(q.id, {
+  aboutId: select.value,
+  text: ""
+});
     // Save draft locally when user interacts
     select.addEventListener("change", () => {
       const cur = draftAnswersByQid.get(q.id) ?? { aboutId: "", text: "" };
