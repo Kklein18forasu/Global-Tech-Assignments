@@ -127,7 +127,7 @@
     </section>
 
 
-   <!-- SCREEN: REVEAL -->
+ <!-- SCREEN: REVEAL -->
 <section class="screen hidden" id="screenReveal">
   <div class="screenHeader">
     <h2>Reveal</h2>
@@ -147,18 +147,16 @@
 
   <div class="panel hidden" id="ownerActions">
     <h3>Your turn (page owner)</h3>
+    <p class="hint">
+      Click one answer for ⭐ Favorite and one for 🎨 Most Creative.
+    </p>
 
-    <label class="field">
-      <span>Pick your favorite answer</span>
-      <select id="favoriteSelect"></select>
-    </label>
+    <div class="row">
+      <div><strong>Favorite:</strong> <span id="favPickLabel">—</span></div>
+      <div><strong>Creative:</strong> <span id="crePickLabel">—</span></div>
+    </div>
 
-    <label class="field">
-      <span>Which answer was the most creative?</span>
-      <select id="creativeSelect"></select>
-    </label>
-
-    <button class="primary" id="btnLockIn">Lock In</button>
+    <button class="primary" id="btnLockIn" disabled>Lock In</button>
   </div>
 
   <div class="panel hidden" id="revealResult">

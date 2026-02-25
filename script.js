@@ -88,6 +88,8 @@ let unsubscribe = null;
 
 let answeringUiRoundKey = null;
 let draftAnswersByQid = new Map();
+let favPickId = null;
+let crePickId = null;
 
 // ---------- Screens + Header UI (matches your HTML) ----------
 const screens = {
@@ -384,8 +386,8 @@ async function ownerLockIn() {
   const aboutId = currentRevealPlayerId();
   if (aboutId !== me.id) return;
 
-  const favoriteSubmissionId = $("favoriteSelect").value;
-  const creativeSubmissionId = $("creativeSelect").value;
+const favoriteSubmissionId = favPickId;
+const creativeSubmissionId = crePickId;
 
 
   if (!favoriteSubmissionId || !creativeSubmissionId) {
@@ -421,6 +423,10 @@ r.locks[aboutId] = {
 
     return cur;
   });
+
+  // ✅ Reset local UI state AFTER transaction completes
+  favPickId = null;
+  crePickId = null;
 }
 
 function renderReveal() {
@@ -436,35 +442,38 @@ function renderReveal() {
   const list = $("revealList");
   list.innerHTML = "";
 
-  // Only answers ABOUT this player
-  const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
-  const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
+ // Only answers ABOUT this player
+const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
+const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
 
-  subs.forEach(s => {
-    const q = qById.get(s.questionId);
-    const block = document.createElement("div");
-    block.className = "answerBlock";
-    block.innerHTML = `
-      <h4>${escapeHtml(q?.color ?? "Prompt")} — ${escapeHtml(q?.text ?? "")}</h4>
-      <div>${escapeHtml(s.text)}</div>
-    `;
-    list.appendChild(block);
-  });
+subs.forEach(s => {
+  const q = qById.get(s.questionId);
+  const block = document.createElement("div");
 
-  // Owner controls
-  const isOwner = me.id === aboutId;
-  $("ownerActions").classList.toggle("hidden", !isOwner);
+  block.className = "answerBlock";
+  block.dataset.submissionId = s.id; // 🔥 important
 
-  if (isOwner) {
-    const options =
-      `<option value="">Select…</option>` +
-      subs.map((s, idx) =>
-        `<option value="${s.id}">Answer ${idx + 1}: ${escapeHtml(truncate(s.text, 42))}</option>`
-      ).join("");
+  block.innerHTML = `
+    <h4>${escapeHtml(q?.color ?? "Prompt")} — ${escapeHtml(q?.text ?? "")}</h4>
+    <div>${escapeHtml(s.text)}</div>
+  `;
 
-    $("favoriteSelect").innerHTML = options;
-    $("creativeSelect").innerHTML = options;
+  // 🔥 Only page owner can click (and only if not locked)
+  if (me.id === aboutId && !(r.locks?.[aboutId]?.resolved)) {
+    block.style.cursor = "pointer";
+    block.addEventListener("click", () => ownerSelectAnswer(s.id));
   }
+
+  list.appendChild(block);
+
+});
+
+  applySelectionHighlights();
+$("btnLockIn").disabled = !(favPickId && crePickId);
+
+// Owner controls
+const isOwner = me.id === aboutId;
+$("ownerActions").classList.toggle("hidden", !isOwner);
 
  // Result display
 const lock = r.locks?.[aboutId];
