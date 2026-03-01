@@ -145,30 +145,28 @@ function openRoom(roomCode) {
     game = data;
     setTopStatus();
 
-    // 🔥 Route FIRST
-    if (!game.phase) return;
+// ✅ Single routing logic (no conflicting overrides)
+if (!game.phase) return;
 
-    switch (game.phase) {
-      case "lobby":
-        showScreen("lobby");
-        break;
-      case "answering":
-        showScreen("answer");
-        break;
-      case "reveal":
-        showScreen("reveal");
-        break;
-      case "score":
-        showScreen("score");
-        break;
-    }
-    
-// ✅ Local waiting logic
 if (game.phase === "answering") {
   const hasSubmitted =
     game.round?.submittedPlayerIds?.includes(me.id);
 
   showScreen(hasSubmitted ? "wait" : "answer");
+} else {
+  switch (game.phase) {
+    case "lobby":
+      showScreen("lobby");
+      break;
+    case "reveal":
+      showScreen("reveal");
+      break;
+    case "score":
+      showScreen("score");
+      break;
+  }
+}
+    
 }
     // 🔥 THEN render
     render();
