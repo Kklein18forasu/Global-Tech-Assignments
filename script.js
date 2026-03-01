@@ -251,12 +251,23 @@ async function hostBeginReveal() {
   await writeGame();
 }
 
-
 async function hostNextReveal() {
   if (!isHost()) return;
 
   const r = game.round;
-  r.revealIndex = Math.min((r.revealIndex ?? 0) + 1, r.revealQueue.length);
+  const aboutId = currentRevealPlayerId();
+  if (!aboutId) return;
+
+  // 🔒 Do NOT advance unless this page is locked
+  const isLocked = r.locks?.[aboutId]?.resolved;
+  if (!isLocked) {
+    return alert("Waiting for the page owner to lock in first.");
+  }
+
+  r.revealIndex = Math.min(
+    (r.revealIndex ?? 0) + 1,
+    r.revealQueue.length
+  );
 
   if (r.revealIndex >= r.revealQueue.length) {
     game.phase = "score";
@@ -435,6 +446,11 @@ function renderReveal() {
   const r = game.round;
   const aboutId = currentRevealPlayerId();
   if (!aboutId) return;
+
+  if (isHost()) {
+  const locked = r.locks?.[aboutId]?.resolved;
+  $("btnNextReveal").disabled = !locked;
+}
 
   const aboutPlayer = game.players.find(p => p.id === aboutId);
   $("revealName").textContent = aboutPlayer?.name ?? "—";
