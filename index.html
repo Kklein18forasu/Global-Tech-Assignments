@@ -26,12 +26,17 @@
     <section class="screen" id="screenRoom">
       <h2>Start / Join</h2>
 
-      <div class="panel grid2">
-        <div class="card">
-          <h3>Host (Game Master)</h3>
-          <p>Creates a room code, starts rounds, reveals pages, awards points.</p>
-          <button id="btnCreateRoom">Create Room</button>
-        </div>
+      <div class="card">
+  <h3>Host (Game Master)</h3>
+  <p>Creates a room code, starts rounds, reveals pages, awards points.</p>
+
+  <label class="field">
+    <span>Your Name</span>
+    <input id="hostNameInput" placeholder="e.g. Kate" maxlength="20" />
+  </label>
+
+  <button id="btnCreateRoom">Create Room</button>
+</div>
 
         <div class="card">
           <h3>Player</h3>

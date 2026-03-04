@@ -158,7 +158,7 @@ const screens = {
   wait: $("screenWait"),
   reveal: $("screenReveal"),
   score: $("screenScore"),
-  gameOver: $("screenGameOver")
+  gameOver: $("screengameover")
 };
 
 const roomLabel = $("roomLabel");
@@ -240,7 +240,8 @@ if (game.phase === "answering") {
       showScreen("score");
       break;
     case "gameover":
-      showScreen("gameOver");
+      showScreen("gameover");
+      renderGameOver();
       break;
   }
 }
@@ -255,13 +256,21 @@ async function writeGame() {
   await set(gameRef, game);
 }
 
-
 // ---------- Host Actions ----------
 async function createRoomAsHost() {
+
+  const name = $("hostNameInput").value.trim();
+
+  if (!name) {
+    alert("Enter your name first!");
+    return;
+  }
+
+  me.name = name;
+
   const room = randId();
 
   me.role = "host";
-  me.name = "Host";
   openRoom(room);
 
   game = {
@@ -276,7 +285,7 @@ async function createRoomAsHost() {
   await writeGame();
 
   setTopStatus();
-
+}
 
   // helpful UX
   alert(`Room created! Code: ${room}`);
@@ -603,13 +612,29 @@ const creative = (r.submissions ?? []).find(s => s.id === creativeSubmissionId);
 
 if (!fav || !creative) return cur;
 
-// Favorite gets +1
-cur.scores[fav.authorId] = (cur.scores[fav.authorId] ?? 0) + 1;
-favAuthorId = fav.authorId;
+// Favorite gets +1 roast meter
+const favPlayer = cur.players.find(p => p.id === fav.authorId);
+if (favPlayer) {
+  favPlayer.roastMeter = (favPlayer.roastMeter ?? 0) + 1;
+  favAuthorId = fav.authorId;
 
-// Creative gets +1
-cur.scores[creative.authorId] = (cur.scores[creative.authorId] ?? 0) + 1;
-creAuthorId = creative.authorId;
+  if (favPlayer.roastMeter >= 10) {
+    cur.phase = "gameover";
+    cur.winnerId = favPlayer.id;
+  }
+}
+
+// Creative gets +1 roast meter
+const crePlayer = cur.players.find(p => p.id === creative.authorId);
+if (crePlayer) {
+  crePlayer.roastMeter = (crePlayer.roastMeter ?? 0) + 1;
+  creAuthorId = creative.authorId;
+
+  if (crePlayer.roastMeter >= 10) {
+    cur.phase = "gameover";
+    cur.winnerId = crePlayer.id;
+  }
+}
 
 r.locks[aboutId] = {
   favoriteSubmissionId,
@@ -671,7 +696,7 @@ function renderReveal() {
   const list = $("revealList");
   list.innerHTML = "";
 
-  // Only answers ABOUT this player
+   // Only answers ABOUT this player
   const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
   const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
 
@@ -704,9 +729,9 @@ Object.entries(grouped).forEach(([questionId, answers]) => {
     block.className = "answerBlock";
     block.dataset.submissionId = s.id;
 
-    block.innerHTML = `
-      <div>${escapeHtml(s.text)}</div>
-    `;
+block.innerHTML = `
+  <div>${escapeHtml(s.text)}</div>
+`;
 
     if (canPick) {
       block.style.cursor = "pointer";
@@ -719,10 +744,7 @@ Object.entries(grouped).forEach(([questionId, answers]) => {
 
   list.appendChild(groupDiv);
 
-});
-
-
-  applySelectionHighlights();
+  });
 
   // If this page is locked, mark the winning submissions for everyone (no names)
   const lock = r.locks?.[aboutId];
@@ -924,16 +946,16 @@ function renderScore() {
     const li = document.createElement("li");
     
     // Create roast meter bar (10 fire emojis)
-    const meterBar = "🔥".repeat(r.roastMeter) + "⭐".repeat(10 - r.roastMeter);
+    const meterBar = "🔥".repeat(r.roastMeter) + "▫️".repeat(10 - r.roastMeter);
 
     li.innerHTML = `
       <div style="flex-grow: 1;">
         <span>${idx + 1}. ${escapeHtml(r.name)}</span>
-        <div style="font-size: 14px; margin-top: 4px; letter-spacing: 2px;">
+        <div class="scoreMeter">
           ${meterBar}
         </div>
       </div>
-      <span><strong>${r.score}</strong></span>
+      <span><strong>${r.roastMeter}</strong></span>
     `;
     ul.appendChild(li);
   });
@@ -955,10 +977,45 @@ function renderGameOver() {
       score: game.scores?.[p.id] ?? 0,
       roastMeter: p.roastMeter ?? 0
     }))
-    .sort((a, b) => b.score - a.score);
+    // Create roast meter bar (10 fire emojis)
+    const meterBar = "🔥".repeat(r.roastMeter) + "▫️".repeat(10 - r.roastMeter);
+
+    li.innerHTML = `
+      <div style="flex-grow: 1;">
+        <span>${idx + 1}. ${escapeHtml(r.name)}</span>
+        <div style="font-size: 14px; margin-top: 4px; letter-spacing: 2px;">
+          ${meterBar}
+        </div>
+      </div>
+      <span><strong>${r.roastMeter}</strong></span>
+    `;
+    ul.appendChild(li);
+  });
+}
+
+function renderGameOver() {
+  if (!game?.winnerId) return;
+
+  const winner = game.players.find(p => p.id === game.winnerId);
+  $("championName").textContent = winner?.name ?? "—";
+
+  const ul = $("finalScoreList");
+  ul.innerHTML = "";
+
+  const rows = game.players
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      roastMeter: p.roastMeter ?? 0
+    }))
+    .sort((a, b) => b.roastMeter - a.roastMeter);
 
   rows.forEach((r, idx) => {
     const li = document.createElement("li");
+    
+ const meterBar =
+      "🔥".repeat(r.roastMeter) +
+      "▫️".repeat(10 - r.roastMeter);
     
     // Create roast meter bar (10 fire emojis)
     const meterBar = "🔥".repeat(r.roastMeter) + "⭐".repeat(10 - r.roastMeter);

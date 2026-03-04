@@ -1,14 +1,13 @@
 :root {
-  --bg: #ffe8f4;
+  --bg: #ffe6f2;
   --panel: #ffffff;
 
-  --text: #2c1a2e;
-  --muted: #7c5a7e;
-
-  --line: #ffd2e9;
+  --text: #2a2a33;
+  --muted: #6a6a80;
+  --line: #ffc2e2;
 
   --btn: #ff2ec7;
-  --btn2: #ff8bd8;
+  --btn2: #ff6bbf;
 }
 
 * { box-sizing: border-box; }
@@ -173,7 +172,11 @@ textarea { min-height: 90px; resize: vertical; }
   font-weight: 700;
   color: #ff2ec7;
 }
-
+.scoreMeter {
+  font-size: 18px;
+  margin-top: 6px;
+  letter-spacing: 6px;
+}
 /* 🏆 Highlight first place */
 
 .list li:first-child {
