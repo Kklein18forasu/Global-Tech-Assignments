@@ -60,66 +60,58 @@ function getRoundKey(r) {
 // ---------- Question Bank ----------
 const QUESTION_BANK = [
 
-  // ---------- RED ----------
-  { id: "red-1", color: "Red", text: "Who would be their dream teacher (and what would they teach)?" },
-  { id: "red-2", color: "Red", text: "What’s their superpower, but make it inconvenient?" },
-  { id: "red-3", color: "Red", text: "What’s their most useless talent?" },
-  { id: "red-4", color: "Red", text: "What’s their signature move in a crisis?" },
-  { id: "red-5", color: "Red", text: "If they had a warning label, what would it say?" },
-  { id: "red-6", color: "Red", text: "What do they never apologize for?" },
-  { id: "red-7", color: "Red", text: "What do they avoid dealing with?" },
-  { id: "red-8", color: "Red", text: "What do they swear they're good at but absolutely aren't?" },
-  { id: "red-9", color: "Red", text: "What’s their most chaotic habit?" },
-  { id: "red-10", color: "Red", text: "What’s the weirdest hill they would die on?" },
-  { id: "red-11", color: "Red", text: "What would their personal conspiracy theory be?" },
-  { id: "red-12", color: "Red", text: "What’s something they do that makes everyone quietly judge them?" },
-  { id: "red-13", color: "Red", text: "What’s something they take way too seriously?" },
-
-  // ---------- ORANGE ----------
-  { id: "orange-1", color: "Orange", text: "What has been the highlight of their year so far?" },
-  { id: "orange-2", color: "Orange", text: "What would their reality TV show be called?" },
-  { id: "orange-3", color: "Orange", text: "What would their autobiography be titled?" },
-  { id: "orange-4", color: "Orange", text: "When this person walks in, what shifts?" },
-  { id: "orange-5", color: "Orange", text: "What would their personal catchphrase be?" },
-  { id: "orange-6", color: "Orange", text: "What do they think is subtle but isn't?" },
-  { id: "orange-7", color: "Orange", text: "If they were president, what would their campaign slogan be?" },
-  { id: "orange-8", color: "Orange", text: "What would their motivational seminar be called?" },
-  { id: "orange-9", color: "Orange", text: "If they opened a restaurant, what would it be famous for?" },
-  { id: "orange-10", color: "Orange", text: "What would their podcast be about?" },
-  { id: "orange-11", color: "Orange", text: "What product would they accidentally invent?" },
-  { id: "orange-12", color: "Orange", text: "What’s the worst excuse they would use to get out of something?" },
-  { id: "orange-13", color: "Orange", text: "What’s something they always overreact to?" },
-
-  // ---------- YELLOW ----------
-  { id: "yellow-1", color: "Yellow", text: "If they started a religion, what would it be called?" },
-  { id: "yellow-2", color: "Yellow", text: "What’s their villain origin story?" },
-  { id: "yellow-3", color: "Yellow", text: "If they had a cult, what would the first rule be?" },
-  { id: "yellow-4", color: "Yellow", text: "What crime would they be most likely to commit?" },
-  { id: "yellow-5", color: "Yellow", text: "What about them would HR quietly document?" },
-  { id: "yellow-6", color: "Yellow", text: "If they were to fake an illness, what would it be?" },
-  { id: "yellow-7", color: "Yellow", text: "What rumor would spread about them at work?" },
-  { id: "yellow-8", color: "Yellow", text: "What crime would they be terrible at committing?" },
-  { id: "yellow-9", color: "Yellow", text: "What would their supervillain costume look like?" },
-  { id: "yellow-10", color: "Yellow", text: "What headline would they accidentally make?" },
-  { id: "yellow-11", color: "Yellow", text: "What would be the most dramatic reason they’d quit a job?" },
-  { id: "yellow-12", color: "Yellow", text: "What would they get banned from doing?" }, 
-  { id: "yellow-13", color: "Yellow", text: "What’s the most on-brand mistake they would make?" },
-
-  // ---------- GREEN ----------
-  { id: "green-1", color: "Green", text: "If they’d been dumped, how would you cheer them up?" },
-  { id: "green-2", color: "Green", text: "What would you text them after they bombed a first date?" },
-  { id: "green-3", color: "Green", text: "If you had to find them in a crowded room but couldn't use their name, what would you call?" },
-  { id: "green-4", color: "Green", text: "What compliment would secretly roast them?" },
-  { id: "green-5", color: "Green", text: "What’s the most ridiculous thing they’ve ever gotten away with?" },
-  { id: "green-6", color: "Green", text: "If you lost them in a grocery store, what aisle would you find them in?" },
-  { id: "green-7", color: "Green", text: "How would you introduce them on a talk show?" },
-  { id: "green-8", color: "Green", text: "What would you write in their yearbook?" },
-  { id: "green-9", color: "Green", text: "What’s something they brag about way too much?" },
-  { id: "green-10", color: "Green", text: "What compliment would confuse them the most?" },
-  { id: "green-11", color: "Green", text: "What would their villain nickname be?" },
-  { id: "green-12", color: "Green", text: "What’s the most embarrassing thing they’d go viral for?" },
-  { id: "green-13", color: "Green", text: "What’s the most predictable thing they do?" },
-
+  "Who would be their dream teacher (and what would they teach)?",
+  "What’s their superpower, but make it inconvenient?",
+  "What’s their most useless talent?",
+  "What’s their signature move in a crisis?",
+  "If they had a warning label, what would it say?",
+  "What do they never apologize for?",
+  "What do they avoid dealing with?",
+  "What do they swear they're good at but absolutely aren't?",
+  "What’s their most chaotic habit?",
+  "What’s the weirdest hill they would die on?",
+  "What would their personal conspiracy theory be?",
+  "What’s something they do that makes everyone quietly judge them?",
+  "What’s something they take way too seriously?",
+  "What has been the highlight of their year so far?",
+  "What would their reality TV show be called?",
+  "What would their autobiography be titled?",
+  "When this person walks in, what shifts?",
+  "What would their personal catchphrase be?",
+  "What do they think is subtle but isn't?",
+  "If they were president, what would their campaign slogan be?",
+  "What would their motivational seminar be called?",
+  "If they opened a restaurant, what would it be famous for?",
+  "What would their podcast be about?",
+  "What product would they accidentally invent?",
+  "What’s the worst excuse they would use to get out of something?",
+  "What’s something they always overreact to?",
+  "If they started a religion, what would it be called?",
+  "What’s their villain origin story?",
+  "If they had a cult, what would the first rule be?",
+  "What crime would they be most likely to commit?",
+  "What about them would HR quietly document?",
+  "If they were to fake an illness, what would it be?",
+  "What rumor would spread about them at work?",
+  "What crime would they be terrible at committing?",
+  "What would their supervillain costume look like?",
+  "What headline would they accidentally make?",
+  "What would be the most dramatic reason they’d quit a job?",
+  "What would they get banned from doing?", 
+  "What’s the most on-brand mistake they would make?" ,
+  "If they’d been dumped, how would you cheer them up?",
+  "What would you text them after they bombed a first date?",
+  "If you had to find them in a crowded room but couldn't use their name, what would you call?",
+  "What compliment would secretly roast them?",
+  "What’s the most ridiculous thing they’ve ever gotten away with?",
+  "If you lost them in a grocery store, what aisle would you find them in?",
+  "How would you introduce them on a talk show?",
+  "What would you write in their yearbook?" ,
+  "What’s something they brag about way too much?",
+  "What compliment would confuse them the most?",
+  "What would their villain nickname be?",
+  "What’s the most embarrassing thing they’d go viral for?",
+   "What’s the most predictable thing they do?" ,
 ];
 
 // ---------- App State ----------
@@ -544,7 +536,9 @@ async function increaseRoastMeter(playerId) {
   const player = game.players.find(p => p.id === playerId);
   if (!player) return;
 
-  player.roastMeter = (player.roastMeter ?? 0) + 1;
+  // 🔥 FIX: Do NOT increment here - the transaction in ownerLockIn() already incremented roastMeter
+  // This function only checks if the player reached 10 and triggers game over
+  // The actual increment happens in the transaction within ownerLockIn()
 
   // Check if reached 10 (Roast Champion)
   if (player.roastMeter >= 10) {
@@ -561,6 +555,9 @@ async function increaseRoastMeter(playerId) {
 // ---------- Owner Lock-In ----------
 async function ownerLockIn() {
   if (!game?.round) return;
+
+  // 🔥 FIX: Only the host should update scores to prevent duplicate scoring
+  if (!isHost()) return;
 
   const aboutId = currentRevealPlayerId();
   if (aboutId !== me.id) return;
