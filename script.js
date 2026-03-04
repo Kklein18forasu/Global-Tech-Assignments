@@ -522,6 +522,9 @@ r.locks[aboutId] = {
   // ✅ Reset local UI state AFTER transaction completes
   favPickId = null;
   crePickId = null;
+
+  // 🔥 Immediately render to show highlights for all clients (including host)
+  render();
 }
 
 function renderReveal() {
