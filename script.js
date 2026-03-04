@@ -1,13 +1,8 @@
 // 🔥 Firebase Setup (Realtime Database Multiplayer)
+// 🔥 Firebase Setup (Realtime Database Multiplayer)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import {
-  getDatabase,
-  ref,
-  set,
-  get,
-  runTransaction,
-  onValue
-} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { getDatabase, ref, set, get, runTransaction, onValue } 
+from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyADZrx36oil91a58Nzf7MjZ7_1uJD43Xdg",
