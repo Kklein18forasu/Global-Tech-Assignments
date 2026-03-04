@@ -215,31 +215,31 @@ function openRoom(roomCode) {
     game = data;
     setTopStatus();
 
-// ✅ Single routing logic (no conflicting overrides)
-if (!game.phase) return;
+    // ✅ Single routing logic (no conflicting overrides)
+    if (!game.phase) return;
 
-if (game.phase === "answering") {
-  const hasSubmitted =
-    game.round?.submittedPlayerIds?.includes(me.id);
+    if (game.phase === "answering") {
+      const hasSubmitted =
+        game.round?.submittedPlayerIds?.includes(me.id);
 
-  showScreen(hasSubmitted ? "wait" : "answer");
-} else {
-  switch (game.phase) {
-    case "lobby":
-      showScreen("lobby");
-      break;
-    case "reveal":
-      showScreen("reveal");
-      break;
-    case "score":
-      showScreen("score");
-      break;
-    case "gameover":
-      showScreen("gameover");
-      renderGameOver();
-      break;
-  }
-}
+      showScreen(hasSubmitted ? "wait" : "answer");
+    } else {
+      switch (game.phase) {
+        case "lobby":
+          showScreen("lobby");
+          break;
+        case "reveal":
+          showScreen("reveal");
+          break;
+        case "score":
+          showScreen("score");
+          break;
+        case "gameover":
+          showScreen("gameover");
+          renderGameOver();
+          break;
+      }
+    }
 
     // 🔥 THEN render
     render();
@@ -960,41 +960,13 @@ function renderGameOver() {
   if (!game?.winnerId) return;
 
   const winner = game.players.find(p => p.id === game.winnerId);
-  $("championName").textContent = winner?.name ?? "—";
+  
+$("winnerOverlay").classList.remove("hidden");
+setTimeout(() => {
+  $("winnerName").textContent = winner?.name ?? "Champion";
+}, 900);
 
-  const ul = $("finalScoreList");
-  ul.innerHTML = "";
-
-  const rows = game.players
-    .map(p => ({
-      id: p.id,
-      name: p.name,
-      score: game.scores?.[p.id] ?? 0,
-      roastMeter: p.roastMeter ?? 0
-    }))
-    // Create roast meter bar (10 fire emojis)
-    const meterBar = "🔥".repeat(r.roastMeter) + "▫️".repeat(10 - r.roastMeter);
-
-    li.innerHTML = `
-      <div style="flex-grow: 1;">
-        <span>${idx + 1}. ${escapeHtml(r.name)}</span>
-        <div style="font-size: 14px; margin-top: 4px; letter-spacing: 2px;">
-          ${meterBar}
-        </div>
-      </div>
-      <span><strong>${r.roastMeter}</strong></span>
-    `;
-    ul.appendChild(li);
-  });
-}
-
-function renderGameOver() {
-  if (!game?.winnerId) return;
-
-  const winner = game.players.find(p => p.id === game.winnerId);
-  $("championName").textContent = winner?.name ?? "—";
-
-  const ul = $("finalScoreList");
+ const ul = $("finalScoreList");
   ul.innerHTML = "";
 
   const rows = game.players
@@ -1008,12 +980,8 @@ function renderGameOver() {
   rows.forEach((r, idx) => {
     const li = document.createElement("li");
     
- const meterBar =
-      "🔥".repeat(r.roastMeter) +
-      "▫️".repeat(10 - r.roastMeter);
-    
     // Create roast meter bar (10 fire emojis)
-    const meterBar = "🔥".repeat(r.roastMeter) + "⭐".repeat(10 - r.roastMeter);
+    const meterBar = "🔥".repeat(r.roastMeter) + "▫️".repeat(10 - r.roastMeter);
 
     li.innerHTML = `
       <div style="flex-grow: 1;">
@@ -1022,7 +990,7 @@ function renderGameOver() {
           ${meterBar}
         </div>
       </div>
-      <span><strong>${r.score}</strong></span>
+      <span><strong>${r.roastMeter}</strong></span>
     `;
     ul.appendChild(li);
   });

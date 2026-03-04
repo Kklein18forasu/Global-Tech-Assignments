@@ -1,15 +1,18 @@
 :root {
-  --bg: #ffe6f2;
-  --panel: #ffffff;
+  --bg: #140b0b;       
+  --panel: #1e1515;    
 
-  --text: #e612f9;
-  --muted: #6a6a80;
-  --line: #ffc2e2;
+  --text: #fff3e6;     
+  --muted: #c9a27a;     
+  --line: #ff7a18;     
 
-  --btn: #ff2ec7;
-  --btn2: #ff6bbf;
+  --btn: #ff5a2f;       
+  --btn2: #ffb347;      
 }
 
+body {
+  background: radial-gradient(circle at top, #2b0d0d, #140b0b);
+} 
 * { box-sizing: border-box; }
 body {
   margin: 0;
@@ -107,8 +110,8 @@ button {
 button.primary {
   background: linear-gradient(
     135deg,
-    #ff4fa3,
-    #ff2ec7
+    #ecb50d,
+    #fcb440
   );
 }
 
@@ -352,4 +355,84 @@ textarea { min-height: 90px; resize: vertical; }
   display: none !important;
 }
 
+}
+ /* 🔥 WINNER FIRE WALL */
+
+.winnerOverlay {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #140b0b;
+  z-index: 9999;
+}
+
+/* flame wall */
+
+.flameWall {
+  position: absolute;
+  bottom: -100%;
+  width: 100%;
+  height: 200%;
+
+  background:
+    radial-gradient(circle at 20% 80%, #ff7a18, transparent 40%),
+    radial-gradient(circle at 40% 90%, #ff5a2f, transparent 45%),
+    radial-gradient(circle at 60% 85%, #ffb347, transparent 40%),
+    radial-gradient(circle at 80% 95%, #ff2e00, transparent 45%);
+
+  animation: flamesRise 2s ease-out forwards;
+}
+
+/* winner text */
+
+.winnerContent {
+  position: relative;
+  text-align: center;
+  color: white;
+  opacity: 0;
+  animation: winnerReveal 1s ease forwards;
+  animation-delay: 1.6s;
+}
+
+#winnerName {
+  font-size: 80px;
+  font-weight: 900;
+
+  text-shadow:
+    0 0 10px #ff7a18,
+    0 0 20px #ff5a2f,
+    0 0 40px #ff2e00;
+}
+
+.winnerText {
+  font-size: 26px;
+  color: #ffb347;
+  margin-top: 10px;
+}
+
+/* animations */
+
+@keyframes flamesRise {
+  from {
+    bottom: -100%;
+  }
+
+  to {
+    bottom: 0;
+  }
+}
+
+@keyframes winnerReveal {
+  from {
+    transform: scale(.7);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
