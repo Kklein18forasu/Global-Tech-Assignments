@@ -1,11 +1,11 @@
 :root {
-  --bg: #0f0f12;
+  --bg: #0ded50;
   --panel: #17171d;
   --text: #f2f2f2;
-  --muted: #b7b7c2;
+  --muted: #71eeff;
   --line: #2a2a33;
 
-  --btn: #2e7dff;
+  --btn: #ff962e;
   --btn2: #2a2a33;
 }
 
@@ -90,6 +90,23 @@ button {
 button.primary { background: var(--btn); border-color: transparent; }
 button.ghost { background: transparent; }
 
+/* Button interactions */
+button {
+  transition: background 0.2s, transform 0.05s, box-shadow 0.15s;
+}
+
+button:hover {
+  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button.primary:hover {
+  background: #3b8cff;
+}
+
 .field { display: grid; gap: 6px; margin: 10px 0; }
 .field span { color: var(--muted); font-size: 13px; }
 
@@ -161,4 +178,14 @@ textarea { min-height: 90px; resize: vertical; }
 .footer {
   border-top: 1px solid var(--line);
   padding: 14px 18px;
+}
+.questionGroup {
+  margin-bottom: 20px;
+}
+
+.questionTitle {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #dcdce6;
+  font-size: 15px;
 }

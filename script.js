@@ -64,14 +64,67 @@ function getRoundKey(r) {
 
 // ---------- Question Bank ----------
 const QUESTION_BANK = [
+
+  // ---------- RED ----------
   { id: "red-1", color: "Red", text: "Who would be their dream teacher (and what would they teach)?" },
-  { id: "orange-1", color: "Orange", text: "What has been the highlight of their year so far?" },
-  { id: "yellow-1", color: "Yellow", text: "If they started a religion, what would it be called?" },
-  { id: "green-1", color: "Green", text: "If they’d been dumped, how would you cheer them up?" },
   { id: "red-2", color: "Red", text: "What’s their superpower, but make it inconvenient?" },
+  { id: "red-3", color: "Red", text: "What’s their most useless talent?" },
+  { id: "red-4", color: "Red", text: "What’s their signature move in a crisis?" },
+  { id: "red-5", color: "Red", text: "If they had a warning label, what would it say?" },
+  { id: "red-6", color: "Red", text: "What do they never apologize for?" },
+  { id: "red-7", color: "Red", text: "What do they avoid dealing with?" },
+  { id: "red-8", color: "Red", text: "What do they swear they're good at but absolutely aren't?" },
+  { id: "red-9", color: "Red", text: "What’s their most chaotic habit?" },
+  { id: "red-10", color: "Red", text: "What’s the weirdest hill they would die on?" },
+  { id: "red-11", color: "Red", text: "What would their personal conspiracy theory be?" },
+  { id: "red-12", color: "Red", text: "What’s something they do that makes everyone quietly judge them?" },
+  { id: "red-13", color: "Red", text: "What’s something they take way too seriously?" },
+
+  // ---------- ORANGE ----------
+  { id: "orange-1", color: "Orange", text: "What has been the highlight of their year so far?" },
   { id: "orange-2", color: "Orange", text: "What would their reality TV show be called?" },
+  { id: "orange-3", color: "Orange", text: "What would their autobiography be titled?" },
+  { id: "orange-4", color: "Orange", text: "When this person walks in, what shifts?" },
+  { id: "orange-5", color: "Orange", text: "What would their personal catchphrase be?" },
+  { id: "orange-6", color: "Orange", text: "What do they think is subtle but isn't?" },
+  { id: "orange-7", color: "Orange", text: "If they were president, what would their campaign slogan be?" },
+  { id: "orange-8", color: "Orange", text: "What would their motivational seminar be called?" },
+  { id: "orange-9", color: "Orange", text: "If they opened a restaurant, what would it be famous for?" },
+  { id: "orange-10", color: "Orange", text: "What would their podcast be about?" },
+  { id: "orange-11", color: "Orange", text: "What product would they accidentally invent?" },
+  { id: "orange-12", color: "Orange", text: "What’s the worst excuse they would use to get out of something?" },
+  { id: "orange-13", color: "Orange", text: "What’s something they always overreact to?" },
+
+  // ---------- YELLOW ----------
+  { id: "yellow-1", color: "Yellow", text: "If they started a religion, what would it be called?" },
   { id: "yellow-2", color: "Yellow", text: "What’s their villain origin story?" },
-  { id: "green-2", color: "Green", text: "What would you text them after they bombed a first date?" }
+  { id: "yellow-3", color: "Yellow", text: "If they had a cult, what would the first rule be?" },
+  { id: "yellow-4", color: "Yellow", text: "What crime would they be most likely to commit?" },
+  { id: "yellow-5", color: "Yellow", text: "What about them would HR quietly document?" },
+  { id: "yellow-6", color: "Yellow", text: "If they were to fake an illness, what would it be?" },
+  { id: "yellow-7", color: "Yellow", text: "What rumor would spread about them at work?" },
+  { id: "yellow-8", color: "Yellow", text: "What crime would they be terrible at committing?" },
+  { id: "yellow-9", color: "Yellow", text: "What would their supervillain costume look like?" },
+  { id: "yellow-10", color: "Yellow", text: "What headline would they accidentally make?" },
+  { id: "yellow-11", color: "Yellow", text: "What would be the most dramatic reason they’d quit a job?" },
+  { id: "yellow-12", color: "Yellow", text: "What would they get banned from doing?" }, 
+  { id: "yellow-13", color: "Yellow", text: "What’s the most on-brand mistake they would make?" },
+
+  // ---------- GREEN ----------
+  { id: "green-1", color: "Green", text: "If they’d been dumped, how would you cheer them up?" },
+  { id: "green-2", color: "Green", text: "What would you text them after they bombed a first date?" },
+  { id: "green-3", color: "Green", text: "If you had to find them in a crowded room but couldn't use their name, what would you call?" },
+  { id: "green-4", color: "Green", text: "What compliment would secretly roast them?" },
+  { id: "green-5", color: "Green", text: "What’s the most ridiculous thing they’ve ever gotten away with?" },
+  { id: "green-6", color: "Green", text: "If you lost them in a grocery store, what aisle would you find them in?" },
+  { id: "green-7", color: "Green", text: "How would you introduce them on a talk show?" },
+  { id: "green-8", color: "Green", text: "What would you write in their yearbook?" },
+  { id: "green-9", color: "Green", text: "What’s something they brag about way too much?" },
+  { id: "green-10", color: "Green", text: "What compliment would confuse them the most?" },
+  { id: "green-11", color: "Green", text: "What would their villain nickname be?" },
+  { id: "green-12", color: "Green", text: "What’s the most embarrassing thing they’d go viral for?" },
+  { id: "green-13", color: "Green", text: "What’s the most predictable thing they do?" },
+
 ];
 
 // ---------- App State ----------
@@ -89,6 +142,8 @@ localStorage.setItem(ME_KEY, me.id);
 let game = null;
 let gameRef = null;
 let unsubscribe = null;
+
+let lastRoundQuestionIds = [];
 
 let answeringUiRoundKey = null;
 let draftAnswersByQid = new Map();
@@ -132,7 +187,22 @@ function currentRevealPlayerId() {
 }
 
 function pickQuestions(qPerPlayer) {
-  return shuffle(QUESTION_BANK).slice(0, qPerPlayer);
+  const shuffled = shuffle([...QUESTION_BANK]);
+
+  let filtered = shuffled.filter(
+    q => !lastRoundQuestionIds.includes(q.id)
+  );
+
+  // fallback if the bank is too small
+  if (filtered.length < qPerPlayer) {
+    filtered = shuffled;
+  }
+
+  const selected = filtered.slice(0, qPerPlayer);
+
+  lastRoundQuestionIds = selected.map(q => q.id);
+
+  return selected;
 }
 
 // ---------- Firebase Room ----------
@@ -555,26 +625,52 @@ function renderReveal() {
   const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
   const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
 
-  subs.forEach(s => {
-    const q = qById.get(s.questionId);
+  const grouped = {};
+
+subs.forEach(s => {
+  if (!grouped[s.questionId]) {
+    grouped[s.questionId] = [];
+  }
+  grouped[s.questionId].push(s);
+});
+
+Object.entries(grouped).forEach(([questionId, answers]) => {
+
+  const q = qById.get(questionId);
+
+  const groupDiv = document.createElement("div");
+  groupDiv.className = "questionGroup";
+
+  const title = document.createElement("div");
+  title.className = "questionTitle";
+  title.textContent = `${q?.color ?? "Prompt"} — ${q?.text ?? ""}`;
+
+  groupDiv.appendChild(title);
+
+  answers.forEach(s => {
+
     const block = document.createElement("div");
 
     block.className = "answerBlock";
-    block.dataset.submissionId = s.id; // 🔥 important
+    block.dataset.submissionId = s.id;
 
     block.innerHTML = `
-      <h4>${escapeHtml(q?.color ?? "Prompt")} — ${escapeHtml(q?.text ?? "")}</h4>
       <div>${escapeHtml(s.text)}</div>
     `;
 
-    // 🔥 Only page owner can click (and only if not locked)
     if (canPick) {
       block.style.cursor = "pointer";
       block.addEventListener("click", () => ownerSelectAnswer(s.id));
     }
 
-    list.appendChild(block);
+    groupDiv.appendChild(block);
+
   });
+
+  list.appendChild(groupDiv);
+
+});
+
 
   applySelectionHighlights();
 
