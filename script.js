@@ -331,11 +331,17 @@ async function hostNextReveal() {
   const aboutId = currentRevealPlayerId();
   if (!aboutId) return;
 
-  // 🔒 Do NOT advance unless this page is locked
-  const isLocked = r.locks?.[aboutId]?.resolved;
-  if (!isLocked) {
-    return alert("Waiting for the page owner to lock in first.");
+  // Determine if there are any submissions for this page
+  const pageSubs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
+
+  // 🔒 If there are answers, require page to be locked before advancing
+  if (pageSubs.length > 0) {
+    const isLocked = r.locks?.[aboutId]?.resolved;
+    if (!isLocked) {
+      return alert("Waiting for the page owner to lock in first.");
+    }
   }
+  // if pageSubs.length === 0, we allow skipping without a lock
 
   r.revealIndex = Math.min(
     (r.revealIndex ?? 0) + 1,
@@ -662,7 +668,9 @@ function renderReveal() {
 
   if (isHost()) {
     const locked = r.locks?.[aboutId]?.resolved;
-    $("btnNextReveal").disabled = !locked;
+    // enable for host if either page is locked or there are no submissions
+    const noSubs = (r.submissions ?? []).filter(s => s.aboutId === aboutId).length === 0;
+    $("btnNextReveal").disabled = !(locked || noSubs);
   }
 
   const aboutPlayer = game.players.find(p => p.id === aboutId);
@@ -675,49 +683,71 @@ function renderReveal() {
   const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
   const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
 
+  // If there are no answers for this player, show a message and adjust controls
+  if (subs.length === 0) {
+    list.innerHTML = `
+      <p class="hint">No answers were submitted for this player.</p>
+    `;
+
+    // owner actions should be hidden regardless of owner status
+    $("ownerActions").classList.add("hidden");
+
+    // result panel should not show anything
+    $("revealResult").classList.add("hidden");
+    $("resultText").textContent = "—";
+
+    // enable next button for host (skip lock requirement)
+    if (isHost()) {
+      $("btnNextReveal").disabled = false;
+    }
+
+    // nothing else to render
+    return;
+  }
+
   const grouped = {};
 
-subs.forEach(s => {
-  if (!grouped[s.questionId]) {
-    grouped[s.questionId] = [];
-  }
-  grouped[s.questionId].push(s);
-});
+  subs.forEach(s => {
+    if (!grouped[s.questionId]) {
+      grouped[s.questionId] = [];
+    }
+    grouped[s.questionId].push(s);
+  });
 
-Object.entries(grouped).forEach(([questionId, answers]) => {
+  Object.entries(grouped).forEach(([questionId, answers]) => {
 
-  const q = qById.get(questionId);
+    const q = qById.get(questionId);
 
-  const groupDiv = document.createElement("div");
-  groupDiv.className = "questionGroup";
+    const groupDiv = document.createElement("div");
+    groupDiv.className = "questionGroup";
 
-  const title = document.createElement("div");
-  title.className = "questionTitle qColor-" + (q?.color?.toLowerCase() ?? "red");
-  title.textContent = `${q?.color ?? "Prompt"} — ${q?.text ?? ""}`;
+    const title = document.createElement("div");
+    title.className = "questionTitle qColor-" + (q?.color?.toLowerCase() ?? "red");
+    title.textContent = `${q?.color ?? "Prompt"} — ${q?.text ?? ""}`;
 
-  groupDiv.appendChild(title);
+    groupDiv.appendChild(title);
 
-  answers.forEach(s => {
+    answers.forEach(s => {
 
-    const block = document.createElement("div");
+      const block = document.createElement("div");
 
-    block.className = "answerBlock";
-    block.dataset.submissionId = s.id;
+      block.className = "answerBlock";
+      block.dataset.submissionId = s.id;
 
-block.innerHTML = `
+      block.innerHTML = `
   <div>${escapeHtml(s.text)}</div>
 `;
 
-    if (canPick) {
-      block.style.cursor = "pointer";
-      block.addEventListener("click", () => ownerSelectAnswer(s.id));
-    }
+      if (canPick) {
+        block.style.cursor = "pointer";
+        block.addEventListener("click", () => ownerSelectAnswer(s.id));
+      }
 
-    groupDiv.appendChild(block);
+      groupDiv.appendChild(block);
 
-  });
+    });
 
-  list.appendChild(groupDiv);
+    list.appendChild(groupDiv);
 
   });
 
