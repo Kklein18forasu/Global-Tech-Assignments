@@ -1,12 +1,14 @@
 :root {
-  --bg: #e1e1e1;
-  --panel: #65656c(240, 3%, 41%);
-  --text: #ffffff;
-  --muted: #c9a6ff;
-  --line: #2a2a33;
+  --bg: #ffe8f4;
+  --panel: #ffffff;
+
+  --text: #2c1a2e;
+  --muted: #7c5a7e;
+
+  --line: #ffd2e9;
 
   --btn: #ff2ec7;
-  --btn2: #f414b0;
+  --btn2: #ff8bd8;
 }
 
 * { box-sizing: border-box; }
@@ -57,10 +59,12 @@ text-shadow:
 
 .panel {
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
   margin: 12px 0;
+
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
 }
 
 .card {
@@ -89,31 +93,45 @@ text-shadow:
 .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 
 button {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-  color: var(--text);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: white;
   background: var(--btn2);
   cursor: pointer;
+  font-weight: 600;
+    transition: transform .12s ease, box-shadow .12s ease, background .2s ease;
 }
-button.primary { background: var(--btn); border-color: transparent; }
-button.ghost { background: transparent; }
 
-/* Button interactions */
-button {
-  transition: background 0.2s, transform 0.05s, box-shadow 0.15s;
+/* Main action buttons */
+
+button.primary {
+  background: linear-gradient(
+    135deg,
+    #ff4fa3,
+    #ff2ec7
+  );
 }
+
+/* Secondary buttons */
+
+button.ghost {
+  background: rgba(255,255,255,0.3);
+  color: var(--text);
+}
+
+/* Hover effect */
 
 button:hover {
-  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(0,0,0,.18);
 }
+
+/* Click effect */
 
 button:active {
-  transform: translateY(1px);
-}
-
-button.primary:hover {
-  background: #3b8cff;
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .field { display: grid; gap: 6px; margin: 10px 0; }
@@ -132,12 +150,45 @@ textarea { min-height: 90px; resize: vertical; }
 
 .hint { color: var(--muted); font-size: 13px; margin: 10px 0; }
 
-.list { list-style: none; padding: 0; margin: 0; }
 .list li {
   display: flex;
   justify-content: space-between;
-  padding: 10px;
-  border-bottom: 1px solid var(--line);
+  align-items: center;
+
+  padding: 12px 16px;
+  margin-bottom: 8px;
+
+  background: #ffffffcc;
+  border-radius: 10px;
+
+  border: 2px solid var(--line);
+
+  font-size: 16px;
+  font-weight: 500;
+
+  /* 🔥 Make score number bigger */
+
+.list li span:last-child {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ff2ec7;
+}
+
+/* 🏆 Highlight first place */
+
+.list li:first-child {
+  background: linear-gradient(
+    135deg,
+    #fff0f8,
+    #ffe0f4
+  );
+  border-color: #ff2ec7;
+}
+
+/* 👑 Crown for leader */
+
+.list li:first-child::before {
+  content: "👑 ";
 }
 
 .questionGrid {
@@ -161,15 +212,33 @@ textarea { min-height: 90px; resize: vertical; }
 
 .revealList {
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 .answerBlock {
-  background: #14141a;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px;
+  background: white;
+
+  border-radius: 14px;
+  padding: 14px;
+
+  border: 2px solid #ffd6f3;
+
+  font-size: 15px;
+  line-height: 1.4;
+
+  transition: transform .12s ease, box-shadow .12s ease;
 }
-.answerBlock h4 { margin: 0 0 6px; font-size: 14px; color: var(--muted); }
+.answerBlock:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 6px 14px rgba(0,0,0,.15);
+}
+.answerBlock h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6c4df6;
+}
 
 /* Selection highlights */
 /* 🔥 Favorite winner */
@@ -248,4 +317,36 @@ textarea { min-height: 90px; resize: vertical; }
 .qColor-green {
   border-left: 5px solid #2ecc71;
   padding-left: 10px;
+}
+
+/* 🔥 Roast Champion & Game Over Styles */
+
+.roastChampionName {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ff2ec7;
+  text-align: center;
+  margin: 20px 0;
+  animation: roastChampionPulse 0.8s ease-in-out;
+}
+
+@keyframes roastChampionPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+#screenGameOver .panel:first-child {
+  background: linear-gradient(
+    135deg,
+    #fff0f8,
+    #ffe8f4
+  );
+  border-color: #ff2ec7;
+  box-shadow: 0 0 20px rgba(255, 46, 199, 0.2);
+}
+
+#hostGameOverControls.hidden {
+  display: none !important;
+}
+
 }

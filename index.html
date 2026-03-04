@@ -180,6 +180,32 @@
       </div>
     </section>
 
+    <!-- SCREEN: GAME OVER -->
+    <section class="screen hidden" id="screenGameOver">
+      <div class="panel">
+        <h2>🔥 ROAST CHAMPION 🔥</h2>
+        <p class="roastChampionName">
+          <strong id="championName">—</strong>
+        </p>
+        <p class="hint">
+          Has reached the maximum Roast Meter level 10 and claimed victory!
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Final Scores</h3>
+        <ul id="finalScoreList" class="list"></ul>
+      </div>
+
+      <div class="panel" id="hostGameOverControls" class="hidden">
+        <h3>Host Controls</h3>
+        <div class="row">
+          <button class="primary" id="btnPlayAgain">Start New Round</button>
+          <button class="ghost" id="btnPlayAgainLeave">Leave Room</button>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <footer class="footer">

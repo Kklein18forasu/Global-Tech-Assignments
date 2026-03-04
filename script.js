@@ -157,7 +157,8 @@ const screens = {
   answer: $("screenAnswer"),
   wait: $("screenWait"),
   reveal: $("screenReveal"),
-  score: $("screenScore")
+  score: $("screenScore"),
+  gameOver: $("screenGameOver")
 };
 
 const roomLabel = $("roomLabel");
@@ -238,6 +239,9 @@ if (game.phase === "answering") {
     case "score":
       showScreen("score");
       break;
+    case "gameover":
+      showScreen("gameOver");
+      break;
   }
 }
 
@@ -263,9 +267,10 @@ async function createRoomAsHost() {
   game = {
     phase: "lobby",
     hostId: me.id,
-    players: [{ id: me.id, name: me.name, joinedAt: Date.now() }],
+    players: [{ id: me.id, name: me.name, joinedAt: Date.now(), roastMeter: 0 }],
     round: null,
-    scores: { [me.id]: 0 }
+    scores: { [me.id]: 0 },
+    winnerId: null
   };
 
   await writeGame();
@@ -384,7 +389,7 @@ async function joinRoomAsPlayer() {
 
     const exists = cur.players.some(p => p.id === me.id);
     if (!exists) {
-      cur.players.push({ id: me.id, name: me.name, joinedAt: Date.now() });
+      cur.players.push({ id: me.id, name: me.name, joinedAt: Date.now(), roastMeter: 0 });
       cur.scores[me.id] = cur.scores[me.id] ?? 0;
     } else {
       // update name if rejoining
@@ -544,6 +549,27 @@ function applySelectionHighlights() {
   $("btnLockIn").disabled = !(favPickId && crePickId);
 }
 
+// ---------- Roast Meter Logic ----------
+async function increaseRoastMeter(playerId) {
+  if (!game?.players) return;
+
+  const player = game.players.find(p => p.id === playerId);
+  if (!player) return;
+
+  player.roastMeter = (player.roastMeter ?? 0) + 1;
+
+  // Check if reached 10 (Roast Champion)
+  if (player.roastMeter >= 10) {
+    game.phase = "gameover";
+    game.winnerId = playerId;
+    await writeGame();
+    render();
+    return true; // Signal that game is over
+  }
+
+  return false;
+}
+
 // ---------- Owner Lock-In ----------
 async function ownerLockIn() {
   if (!game?.round) return;
@@ -558,6 +584,9 @@ const creativeSubmissionId = crePickId;
   if (!favoriteSubmissionId || !creativeSubmissionId) {
     return alert("Pick a favorite and a creative submission.");
   }
+
+  let favAuthorId = null;
+  let creAuthorId = null;
 
   await runTransaction(gameRef, (cur) => {
     if (!cur?.round) return cur;
@@ -576,9 +605,11 @@ if (!fav || !creative) return cur;
 
 // Favorite gets +1
 cur.scores[fav.authorId] = (cur.scores[fav.authorId] ?? 0) + 1;
+favAuthorId = fav.authorId;
 
 // Creative gets +1
 cur.scores[creative.authorId] = (cur.scores[creative.authorId] ?? 0) + 1;
+creAuthorId = creative.authorId;
 
 r.locks[aboutId] = {
   favoriteSubmissionId,
@@ -588,6 +619,25 @@ r.locks[aboutId] = {
 
     return cur;
   });
+
+  // ✅ After transaction, increment roast meters and check for winner
+  if (favAuthorId) {
+    const gameOver = await increaseRoastMeter(favAuthorId);
+    if (gameOver) {
+      favPickId = null;
+      crePickId = null;
+      return; // Game over, stop processing
+    }
+  }
+
+  if (creAuthorId && creAuthorId !== favAuthorId) {
+    const gameOver = await increaseRoastMeter(creAuthorId);
+    if (gameOver) {
+      favPickId = null;
+      crePickId = null;
+      return; // Game over, stop processing
+    }
+  }
 
   // ✅ Reset local UI state AFTER transaction completes
   favPickId = null;
@@ -862,14 +912,70 @@ function renderScore() {
   ul.innerHTML = "";
 
   const rows = game.players
-    .map(p => ({ name: p.name, score: game.scores?.[p.id] ?? 0 }))
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      score: game.scores?.[p.id] ?? 0,
+      roastMeter: p.roastMeter ?? 0
+    }))
     .sort((a, b) => b.score - a.score);
 
   rows.forEach((r, idx) => {
     const li = document.createElement("li");
-    li.innerHTML = `<span>${idx + 1}. ${escapeHtml(r.name)}</span><span><strong>${r.score}</strong></span>`;
+    
+    // Create roast meter bar (10 fire emojis)
+    const meterBar = "🔥".repeat(r.roastMeter) + "⭐".repeat(10 - r.roastMeter);
+
+    li.innerHTML = `
+      <div style="flex-grow: 1;">
+        <span>${idx + 1}. ${escapeHtml(r.name)}</span>
+        <div style="font-size: 14px; margin-top: 4px; letter-spacing: 2px;">
+          ${meterBar}
+        </div>
+      </div>
+      <span><strong>${r.score}</strong></span>
+    `;
     ul.appendChild(li);
   });
+}
+
+function renderGameOver() {
+  if (!game?.winnerId) return;
+
+  const winner = game.players.find(p => p.id === game.winnerId);
+  $("championName").textContent = winner?.name ?? "—";
+
+  const ul = $("finalScoreList");
+  ul.innerHTML = "";
+
+  const rows = game.players
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      score: game.scores?.[p.id] ?? 0,
+      roastMeter: p.roastMeter ?? 0
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  rows.forEach((r, idx) => {
+    const li = document.createElement("li");
+    
+    // Create roast meter bar (10 fire emojis)
+    const meterBar = "🔥".repeat(r.roastMeter) + "⭐".repeat(10 - r.roastMeter);
+
+    li.innerHTML = `
+      <div style="flex-grow: 1;">
+        <span>${idx + 1}. ${escapeHtml(r.name)}</span>
+        <div style="font-size: 14px; margin-top: 4px; letter-spacing: 2px;">
+          ${meterBar}
+        </div>
+      </div>
+      <span><strong>${r.score}</strong></span>
+    `;
+    ul.appendChild(li);
+  });
+
+  $("hostGameOverControls").classList.toggle("hidden", !isHost());
 }
 
 function render() {
@@ -880,6 +986,7 @@ function render() {
   renderWaiting();
   renderReveal();
   renderScore();
+  renderGameOver();
 
   $("btnStartRound").classList.toggle("hidden", !isHost());
   $("hostSetup").classList.toggle("hidden", !isHost());
@@ -903,6 +1010,10 @@ $("btnNextReveal").addEventListener("click", hostNextReveal);
 $("btnLockIn").addEventListener("click", ownerLockIn);
 $("btnNewRound").addEventListener("click", hostStartRound);
 $("btnBackToReveal").addEventListener("click", () => setPhase("reveal"));
+
+$("btnPlayAgain").addEventListener("click", hostStartRound);
+$("btnPlayAgainLeave").addEventListener("click", leaveRoom);
+
 function boot() {
   showScreen("room");
   setTopStatus();
