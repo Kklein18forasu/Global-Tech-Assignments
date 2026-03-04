@@ -351,7 +351,7 @@ textarea { min-height: 90px; resize: vertical; }
   box-shadow: 0 0 20px rgba(255, 46, 199, 0.2);
 }
 
-#hostGameOverControls.hidden {
+  .hidden{
   display: none !important;
 }
 

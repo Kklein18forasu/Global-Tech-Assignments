@@ -280,7 +280,6 @@ async function createRoomAsHost() {
   await writeGame();
 
   setTopStatus();
-}
 
   // helpful UX
   alert(`Room created! Code: ${room}`);
