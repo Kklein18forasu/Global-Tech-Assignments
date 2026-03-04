@@ -391,6 +391,67 @@ for (const q of (game.round.questions ?? [])) {
 });
 }
 
+// ---------- Owner Selection Logic ----------
+function ownerSelectAnswer(submissionId) {
+  // First click: set as favorite
+  if (favPickId === null && crePickId === null) {
+    favPickId = submissionId;
+  }
+  // Clicking favorite again: toggle/unselect
+  else if (submissionId === favPickId) {
+    favPickId = null;
+  }
+  // Clicking creative again: toggle/unselect
+  else if (submissionId === crePickId) {
+    crePickId = null;
+  }
+  // Second pick: set as creative (when favorite already set)
+  else if (favPickId !== null && crePickId === null) {
+    crePickId = submissionId;
+  }
+  // Second pick: set as favorite (when creative already set)
+  else if (favPickId === null && crePickId !== null) {
+    favPickId = submissionId;
+  }
+  // Both picks exist: do nothing (limit = 2)
+
+  applySelectionHighlights();
+}
+
+function applySelectionHighlights() {
+  const blocks = document.querySelectorAll(".answerBlock");
+
+  blocks.forEach(block => {
+    const submissionId = block.dataset.submissionId;
+    block.classList.remove("pickedFav", "pickedCreative");
+
+    if (submissionId === favPickId) {
+      block.classList.add("pickedFav");
+    }
+    if (submissionId === crePickId) {
+      block.classList.add("pickedCreative");
+    }
+  });
+
+  // Update label text
+  if (favPickId) {
+    const fav = game?.round?.submissions.find(s => s.id === favPickId);
+    $("favPickLabel").textContent = fav ? `✓ ${truncate(fav.text, 25)}` : "—";
+  } else {
+    $("favPickLabel").textContent = "—";
+  }
+
+  if (crePickId) {
+    const creative = game?.round?.submissions.find(s => s.id === crePickId);
+    $("crePickLabel").textContent = creative ? `✓ ${truncate(creative.text, 25)}` : "—";
+  } else {
+    $("crePickLabel").textContent = "—";
+  }
+
+  // Update lock-in button state
+  $("btnLockIn").disabled = !(favPickId && crePickId);
+}
+
 // ---------- Owner Lock-In ----------
 async function ownerLockIn() {
   if (!game?.round) return;
@@ -486,11 +547,10 @@ subs.forEach(s => {
 });
 
   applySelectionHighlights();
-$("btnLockIn").disabled = !(favPickId && crePickId);
 
-// Owner controls
-const isOwner = me.id === aboutId;
-$("ownerActions").classList.toggle("hidden", !isOwner);
+  // Owner controls visibility
+  const isOwner = me.id === aboutId;
+  $("ownerActions").classList.toggle("hidden", !isOwner);
 
  // Result display
 const lock = r.locks?.[aboutId];
