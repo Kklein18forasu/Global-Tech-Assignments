@@ -642,7 +642,7 @@ Object.entries(grouped).forEach(([questionId, answers]) => {
   groupDiv.className = "questionGroup";
 
   const title = document.createElement("div");
-  title.className = "questionTitle";
+  title.className = "questionTitle qColor-" + (q?.color?.toLowerCase() ?? "red");
   title.textContent = `${q?.color ?? "Prompt"} — ${q?.text ?? ""}`;
 
   groupDiv.appendChild(title);

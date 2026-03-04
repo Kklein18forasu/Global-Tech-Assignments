@@ -1,12 +1,12 @@
 :root {
-  --bg: #0ded50;
-  --panel: #17171d;
-  --text: #f2f2f2;
-  --muted: #71eeff;
+  --bg: #e1e1e1;
+  --panel: #65656c(240, 3%, 41%);
+  --text: #ffffff;
+  --muted: #c9a6ff;
   --line: #2a2a33;
 
-  --btn: #ff962e;
-  --btn2: #2a2a33;
+  --btn: #ff2ec7;
+  --btn2: #f414b0;
 }
 
 * { box-sizing: border-box; }
@@ -26,7 +26,16 @@ body {
   border-bottom: 1px solid var(--line);
 }
 
-.brand h1 { margin: 0; font-size: 20px; }
+.brand h1 {
+  margin: 0;
+  font-size: 20px;
+  color: #ff5a36;
+
+text-shadow:
+  0 0 6px rgba(255,120,60,0.6),
+  0 0 12px rgba(255,80,20,0.6),
+  0 0 20px rgba(255,40,0,0.4);
+}
 .sub { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
 
 .status {
@@ -163,16 +172,46 @@ textarea { min-height: 90px; resize: vertical; }
 .answerBlock h4 { margin: 0 0 6px; font-size: 14px; color: var(--muted); }
 
 /* Selection highlights */
+/* 🔥 Favorite winner */
+
 .answerBlock.pickedFav {
-  border-color: #ffd700;
-  background: rgba(255, 215, 0, 0.08);
-  box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+  border-color: #ff9f1a;
+
+  box-shadow:
+    0 0 8px rgba(255,160,40,.7),
+    0 0 16px rgba(255,90,20,.5),
+    0 0 26px rgba(255,40,0,.35);
+
+  background: rgba(255,120,20,.08);
 }
 
+/* 🔥 Most creative winner */
+
 .answerBlock.pickedCreative {
-  border-color: #9b59b6;
-  background: rgba(155, 89, 182, 0.08);
-  box-shadow: 0 0 8px rgba(155, 89, 182, 0.2);
+  border-color: #ff3b3b;
+
+  box-shadow:
+    0 0 8px rgba(255,80,60,.7),
+    0 0 16px rgba(255,40,40,.5),
+    0 0 26px rgba(255,0,0,.35);
+
+  background: rgba(255,60,40,.08);
+}
+
+/* 🔥 Winner pop animation */
+
+.answerBlock.pickedFav,
+.answerBlock.pickedCreative {
+  animation: roastGlow 0.35s ease;
+}
+
+@keyframes roastGlow {
+  0% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .footer {
@@ -188,4 +227,25 @@ textarea { min-height: 90px; resize: vertical; }
   margin-bottom: 8px;
   color: #dcdce6;
   font-size: 15px;
+}
+/* Question color styles */
+
+.qColor-red {
+  border-left: 5px solid #ff4d4d;
+  padding-left: 10px;
+}
+
+.qColor-orange {
+  border-left: 5px solid #ff9f43;
+  padding-left: 10px;
+}
+
+.qColor-yellow {
+  border-left: 5px solid #ffd93d;
+  padding-left: 10px;
+}
+
+.qColor-green {
+  border-left: 5px solid #2ecc71;
+  padding-left: 10px;
 }
