@@ -307,6 +307,8 @@ async function hostStartRound() {
     revealIndex: 0,
     locks: {},
     activePlayerIds: players.map(p => p.id),
+    // shared marker for the currently selected winning answer (cleared each reveal/page)
+    winningAnswerId: null,
   };
 
   game.phase = "answering";
@@ -470,7 +472,7 @@ for (const q of (game.round.questions ?? [])) {
 }
 
 // ---------- Owner Selection Logic ----------
-function ownerSelectAnswer(submissionId) {
+async function ownerSelectAnswer(submissionId) {
   // 🔒 Guard: verify this player is the page owner and page is not locked
   const aboutId = currentRevealPlayerId();
   const isOwner = me.id === aboutId;
@@ -484,6 +486,43 @@ function ownerSelectAnswer(submissionId) {
     return;
   }
 
+  // persist the winner choice in the shared game state so everyone can see it
+  try {
+    await runTransaction(gameRef, cur => {
+      if (!cur?.round) return cur;
+      const r = cur.round;
+
+      // guard again inside transaction
+      if (me.id !== aboutId) return cur;
+      if (r.locks?.[aboutId]?.resolved) return cur;
+
+      // toggle the win id
+      if (r.winningAnswerId === submissionId) {
+        delete r.winningAnswerId;
+      } else {
+        r.winningAnswerId = submissionId;
+      }
+
+      return cur;
+    });
+  } catch (err) {
+    console.error("failed to save winning answer", err);
+  }
+
+  // update local copy so render() can reflect the change immediately for the host
+  if (game?.round) {
+    if (game.round.winningAnswerId === submissionId) {
+      delete game.round.winningAnswerId;
+    } else {
+      game.round.winningAnswerId = submissionId;
+    }
+  }
+
+  // re-render immediately so host sees the shared highlight without waiting for the
+  // onValue callback (other clients will also update via onValue)
+  render();
+
+  // maintain the existing two‑pick logic for favorite/creative (unchanged)
   // First click: set as favorite
   if (favPickId === null && crePickId === null) {
     favPickId = submissionId;
@@ -518,18 +557,23 @@ function ownerSelectAnswer(submissionId) {
   applySelectionHighlights();
 }
 
+
 function applySelectionHighlights() {
   const blocks = document.querySelectorAll(".answerBlock");
+  const winId = game?.round?.winningAnswerId;
 
   blocks.forEach(block => {
     const submissionId = block.dataset.submissionId;
-    block.classList.remove("pickedFav", "pickedCreative");
+    block.classList.remove("pickedFav", "pickedCreative", "winningAnswer");
 
     if (submissionId === favPickId) {
       block.classList.add("pickedFav");
     }
     if (submissionId === crePickId) {
       block.classList.add("pickedCreative");
+    }
+    if (winId && submissionId === winId) {
+      block.classList.add("winningAnswer");
     }
   });
 
@@ -739,6 +783,20 @@ block.innerHTML = `
   list.appendChild(groupDiv);
 
   });
+
+  // highlight the shared winning answer if one has been recorded
+  const winId = r.winningAnswerId;
+  if (winId) {
+    const blocks = list.querySelectorAll('.answerBlock');
+    blocks.forEach(block => {
+      const sid = block.dataset.submissionId;
+      if (sid === winId) {
+        block.classList.add('winningAnswer');
+      } else {
+        block.classList.remove('winningAnswer');
+      }
+    });
+  }
 
   // If this page is locked, mark the winning submissions for everyone (no names)
   const lock = r.locks?.[aboutId];

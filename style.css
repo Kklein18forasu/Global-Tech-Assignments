@@ -168,6 +168,7 @@ textarea { min-height: 90px; resize: vertical; }
   font-size: 16px;
   font-weight: 500;
 
+}
   /* 🔥 Make score number bigger */
 
 .list li span:last-child {
@@ -271,6 +272,15 @@ textarea { min-height: 90px; resize: vertical; }
     0 0 26px rgba(255,0,0,.35);
 
   background: rgba(255,60,40,.08);
+}
+
+/* ✨ Shared winning answer (visible to everyone) */
+.answerBlock.winningAnswer {
+  border-color: #00d1ff;
+  box-shadow:
+    0 0 8px rgba(0,209,255,.7),
+    0 0 16px rgba(0,150,255,.5);
+  background: rgba(0,210,255,.1);
 }
 
 /* 🔥 Winner pop animation */
