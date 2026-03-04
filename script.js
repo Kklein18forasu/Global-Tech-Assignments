@@ -393,27 +393,49 @@ for (const q of (game.round.questions ?? [])) {
 
 // ---------- Owner Selection Logic ----------
 function ownerSelectAnswer(submissionId) {
+  // 🔒 Guard: verify this player is the page owner and page is not locked
+  const aboutId = currentRevealPlayerId();
+  const isOwner = me.id === aboutId;
+  const isLocked = !!game?.round?.locks?.[aboutId]?.resolved;
+  const canPick = isOwner && !isLocked;
+
+  console.log({ meId: me.id, revealId: aboutId, isOwner, locked: isLocked, canPick, submissionId });
+
+  if (!canPick) {
+    console.warn("❌ Cannot pick: not page owner or page is locked");
+    return;
+  }
+
   // First click: set as favorite
   if (favPickId === null && crePickId === null) {
     favPickId = submissionId;
+    console.log("✅ Set as FAVORITE:", submissionId);
   }
   // Clicking favorite again: toggle/unselect
   else if (submissionId === favPickId) {
     favPickId = null;
+    console.log("↩️ Unselected FAVORITE");
   }
   // Clicking creative again: toggle/unselect
   else if (submissionId === crePickId) {
     crePickId = null;
+    console.log("↩️ Unselected CREATIVE");
   }
   // Second pick: set as creative (when favorite already set)
   else if (favPickId !== null && crePickId === null) {
     crePickId = submissionId;
+    console.log("✅ Set as CREATIVE:", submissionId);
   }
   // Second pick: set as favorite (when creative already set)
   else if (favPickId === null && crePickId !== null) {
     favPickId = submissionId;
+    console.log("✅ Set as FAVORITE (2nd):", submissionId);
   }
   // Both picks exist: do nothing (limit = 2)
+  else {
+    console.log("⚠️ Already have 2 picks, ignoring click");
+    return;
+  }
 
   applySelectionHighlights();
 }
@@ -509,10 +531,16 @@ function renderReveal() {
   const aboutId = currentRevealPlayerId();
   if (!aboutId) return;
 
+  // 🔍 DEBUG: Log key values to verify page owner detection
+  const isOwner = me.id === aboutId;
+  const isLocked = !!r.locks?.[aboutId]?.resolved;
+  const canPick = isOwner && !isLocked;
+  console.log({ meId: me.id, revealId: aboutId, isOwner, locked: isLocked, canPick });
+
   if (isHost()) {
-  const locked = r.locks?.[aboutId]?.resolved;
-  $("btnNextReveal").disabled = !locked;
-}
+    const locked = r.locks?.[aboutId]?.resolved;
+    $("btnNextReveal").disabled = !locked;
+  }
 
   const aboutPlayer = game.players.find(p => p.id === aboutId);
   $("revealName").textContent = aboutPlayer?.name ?? "—";
@@ -520,37 +548,35 @@ function renderReveal() {
   const list = $("revealList");
   list.innerHTML = "";
 
- // Only answers ABOUT this player
-const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
-const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
+  // Only answers ABOUT this player
+  const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
+  const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
 
-subs.forEach(s => {
-  const q = qById.get(s.questionId);
-  const block = document.createElement("div");
+  subs.forEach(s => {
+    const q = qById.get(s.questionId);
+    const block = document.createElement("div");
 
-  block.className = "answerBlock";
-  block.dataset.submissionId = s.id; // 🔥 important
+    block.className = "answerBlock";
+    block.dataset.submissionId = s.id; // 🔥 important
 
-  block.innerHTML = `
-    <h4>${escapeHtml(q?.color ?? "Prompt")} — ${escapeHtml(q?.text ?? "")}</h4>
-    <div>${escapeHtml(s.text)}</div>
-  `;
+    block.innerHTML = `
+      <h4>${escapeHtml(q?.color ?? "Prompt")} — ${escapeHtml(q?.text ?? "")}</h4>
+      <div>${escapeHtml(s.text)}</div>
+    `;
 
-  // 🔥 Only page owner can click (and only if not locked)
-  if (me.id === aboutId && !(r.locks?.[aboutId]?.resolved)) {
-    block.style.cursor = "pointer";
-    block.addEventListener("click", () => ownerSelectAnswer(s.id));
-  }
+    // 🔥 Only page owner can click (and only if not locked)
+    if (canPick) {
+      block.style.cursor = "pointer";
+      block.addEventListener("click", () => ownerSelectAnswer(s.id));
+    }
 
-  list.appendChild(block);
-
-});
+    list.appendChild(block);
+  });
 
   applySelectionHighlights();
 
-  // Owner controls visibility
-  const isOwner = me.id === aboutId;
-  $("ownerActions").classList.toggle("hidden", !isOwner);
+  // Owner controls visibility - only show when page owner can pick
+  $("ownerActions").classList.toggle("hidden", !canPick);
 
  // Result display
 const lock = r.locks?.[aboutId];
