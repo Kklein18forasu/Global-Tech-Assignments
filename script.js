@@ -75,12 +75,16 @@ const QUESTION_BANK = [
 ];
 
 // ---------- App State ----------
+const ME_KEY = "arb_me_id"; // Anonymous Roast Burnbook
+
 const me = {
-  id: randId(),
+  id: localStorage.getItem(ME_KEY) || randId(),
   name: "",
-  role: "none", // "host" | "player"
+  role: "none",
   room: ""
 };
+
+localStorage.setItem(ME_KEY, me.id);
 
 let game = null;
 let gameRef = null;
