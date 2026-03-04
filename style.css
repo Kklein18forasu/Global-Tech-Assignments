@@ -222,16 +222,14 @@ textarea { min-height: 90px; resize: vertical; }
   gap: 14px;
 }
 .answerBlock {
-  background: white;
-
+  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px;
-
-  border: 2px solid #ffd6f3;
-
   font-size: 15px;
   line-height: 1.4;
-
+  color: var(--text);
+  position: relative;
   transition: transform .12s ease, box-shadow .12s ease;
 }
 .answerBlock:hover {
@@ -239,12 +237,6 @@ textarea { min-height: 90px; resize: vertical; }
 
   box-shadow:
     0 6px 14px rgba(0,0,0,.15);
-}
-.answerBlock h4 {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #6c4df6;
 }
 
 /* Selection highlights */
@@ -297,6 +289,14 @@ textarea { min-height: 90px; resize: vertical; }
   100% {
     transform: scale(1);
   }
+}
+
+.winnerBadge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 .footer {

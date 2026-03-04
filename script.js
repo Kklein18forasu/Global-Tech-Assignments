@@ -142,8 +142,6 @@ let lastRoundQuestionIds = [];
 
 let answeringUiRoundKey = null;
 let draftAnswersByQid = new Map();
-let favPickId = null;
-let crePickId = null;
 
 // ---------- Screens + Header UI (matches your HTML) ----------
 const screens = {
@@ -309,6 +307,8 @@ async function hostStartRound() {
     activePlayerIds: players.map(p => p.id),
     // shared marker for the currently selected winning answer (cleared each reveal/page)
     winningAnswerId: null,
+    favoriteAnswerId: null,
+    creativeAnswerId: null,
   };
 
   game.phase = "answering";
@@ -486,115 +486,56 @@ async function ownerSelectAnswer(submissionId) {
     return;
   }
 
-  // persist the winner choice in the shared game state so everyone can see it
+  // Get current shared selections
+  const currentFav = game?.round?.favoriteAnswerId;
+  const currentCre = game?.round?.creativeAnswerId;
+
+  let newFav = currentFav;
+  let newCre = currentCre;
+
+  if (currentFav === submissionId) {
+    // unselect favorite
+    newFav = null;
+  } else if (currentCre === submissionId) {
+    // unselect creative
+    newCre = null;
+  } else if (currentFav === null) {
+    newFav = submissionId;
+  } else if (currentCre === null) {
+    newCre = submissionId;
+  } else {
+    // both set, reset and set favorite
+    newFav = submissionId;
+    newCre = null;
+  }
+
+  // Update shared state
   try {
     await runTransaction(gameRef, cur => {
       if (!cur?.round) return cur;
       const r = cur.round;
-
-      // guard again inside transaction
+      // guard again
       if (me.id !== aboutId) return cur;
       if (r.locks?.[aboutId]?.resolved) return cur;
-
-      // toggle the win id
-      if (r.winningAnswerId === submissionId) {
-        delete r.winningAnswerId;
-      } else {
-        r.winningAnswerId = submissionId;
-      }
-
+      r.favoriteAnswerId = newFav;
+      r.creativeAnswerId = newCre;
       return cur;
     });
   } catch (err) {
-    console.error("failed to save winning answer", err);
-  }
-
-  // update local copy so render() can reflect the change immediately for the host
-  if (game?.round) {
-    if (game.round.winningAnswerId === submissionId) {
-      delete game.round.winningAnswerId;
-    } else {
-      game.round.winningAnswerId = submissionId;
-    }
-  }
-
-  // re-render immediately so host sees the shared highlight without waiting for the
-  // onValue callback (other clients will also update via onValue)
-  render();
-
-  // maintain the existing two‑pick logic for favorite/creative (unchanged)
-  // First click: set as favorite
-  if (favPickId === null && crePickId === null) {
-    favPickId = submissionId;
-    console.log("✅ Set as FAVORITE:", submissionId);
-  }
-  // Clicking favorite again: toggle/unselect
-  else if (submissionId === favPickId) {
-    favPickId = null;
-    console.log("↩️ Unselected FAVORITE");
-  }
-  // Clicking creative again: toggle/unselect
-  else if (submissionId === crePickId) {
-    crePickId = null;
-    console.log("↩️ Unselected CREATIVE");
-  }
-  // Second pick: set as creative (when favorite already set)
-  else if (favPickId !== null && crePickId === null) {
-    crePickId = submissionId;
-    console.log("✅ Set as CREATIVE:", submissionId);
-  }
-  // Second pick: set as favorite (when creative already set)
-  else if (favPickId === null && crePickId !== null) {
-    favPickId = submissionId;
-    console.log("✅ Set as FAVORITE (2nd):", submissionId);
-  }
-  // Both picks exist: do nothing (limit = 2)
-  else {
-    console.log("⚠️ Already have 2 picks, ignoring click");
+    console.error("failed to save selections", err);
     return;
   }
 
-  applySelectionHighlights();
-}
-
-
-function applySelectionHighlights() {
-  const blocks = document.querySelectorAll(".answerBlock");
-  const winId = game?.round?.winningAnswerId;
-
-  blocks.forEach(block => {
-    const submissionId = block.dataset.submissionId;
-    block.classList.remove("pickedFav", "pickedCreative", "winningAnswer");
-
-    if (submissionId === favPickId) {
-      block.classList.add("pickedFav");
-    }
-    if (submissionId === crePickId) {
-      block.classList.add("pickedCreative");
-    }
-    if (winId && submissionId === winId) {
-      block.classList.add("winningAnswer");
-    }
-  });
-
-  // Update label text
-  if (favPickId) {
-    const fav = game?.round?.submissions.find(s => s.id === favPickId);
-    $("favPickLabel").textContent = fav ? `✓ ${truncate(fav.text, 25)}` : "—";
-  } else {
-    $("favPickLabel").textContent = "—";
+  // Update local copy
+  if (game?.round) {
+    game.round.favoriteAnswerId = newFav;
+    game.round.creativeAnswerId = newCre;
   }
 
-  if (crePickId) {
-    const creative = game?.round?.submissions.find(s => s.id === crePickId);
-    $("crePickLabel").textContent = creative ? `✓ ${truncate(creative.text, 25)}` : "—";
-  } else {
-    $("crePickLabel").textContent = "—";
-  }
-
-  // Update lock-in button state
-  $("btnLockIn").disabled = !(favPickId && crePickId);
+  // Re-render
+  render();
 }
+
 
 // ---------- Roast Meter Logic ----------
 async function increaseRoastMeter(playerId) {
@@ -624,9 +565,8 @@ async function ownerLockIn() {
   const aboutId = currentRevealPlayerId();
   if (aboutId !== me.id) return;
 
-const favoriteSubmissionId = favPickId;
-const creativeSubmissionId = crePickId;
-
+  const favoriteSubmissionId = game.round.favoriteAnswerId;
+  const creativeSubmissionId = game.round.creativeAnswerId;
 
   if (!favoriteSubmissionId || !creativeSubmissionId) {
     return alert("Pick a favorite and a creative submission.");
@@ -646,39 +586,39 @@ const creativeSubmissionId = crePickId;
     if (r.locks[aboutId]?.resolved) return cur;
 
     const fav = (r.submissions ?? []).find(s => s.id === favoriteSubmissionId);
-const creative = (r.submissions ?? []).find(s => s.id === creativeSubmissionId);
+    const creative = (r.submissions ?? []).find(s => s.id === creativeSubmissionId);
 
-if (!fav || !creative) return cur;
+    if (!fav || !creative) return cur;
 
-// Favorite gets +1 roast meter
-const favPlayer = cur.players.find(p => p.id === fav.authorId);
-if (favPlayer) {
-  favPlayer.roastMeter = (favPlayer.roastMeter ?? 0) + 1;
-  favAuthorId = fav.authorId;
+    // Favorite gets +1 roast meter
+    const favPlayer = cur.players.find(p => p.id === fav.authorId);
+    if (favPlayer) {
+      favPlayer.roastMeter = (favPlayer.roastMeter ?? 0) + 1;
+      favAuthorId = fav.authorId;
 
-  if (favPlayer.roastMeter >= 10) {
-    cur.phase = "gameover";
-    cur.winnerId = favPlayer.id;
-  }
-}
+      if (favPlayer.roastMeter >= 10) {
+        cur.phase = "gameover";
+        cur.winnerId = favPlayer.id;
+      }
+    }
 
-// Creative gets +1 roast meter
-const crePlayer = cur.players.find(p => p.id === creative.authorId);
-if (crePlayer) {
-  crePlayer.roastMeter = (crePlayer.roastMeter ?? 0) + 1;
-  creAuthorId = creative.authorId;
+    // Creative gets +1 roast meter
+    const crePlayer = cur.players.find(p => p.id === creative.authorId);
+    if (crePlayer) {
+      crePlayer.roastMeter = (crePlayer.roastMeter ?? 0) + 1;
+      creAuthorId = creative.authorId;
 
-  if (crePlayer.roastMeter >= 10) {
-    cur.phase = "gameover";
-    cur.winnerId = crePlayer.id;
-  }
-}
+      if (crePlayer.roastMeter >= 10) {
+        cur.phase = "gameover";
+        cur.winnerId = crePlayer.id;
+      }
+    }
 
-r.locks[aboutId] = {
-  favoriteSubmissionId,
-  creativeSubmissionId,
-  resolved: true
-};
+    r.locks[aboutId] = {
+      favoriteSubmissionId,
+      creativeSubmissionId,
+      resolved: true
+    };
 
     return cur;
   });
@@ -687,8 +627,8 @@ r.locks[aboutId] = {
   if (favAuthorId) {
     const gameOver = await increaseRoastMeter(favAuthorId);
     if (gameOver) {
-      favPickId = null;
-      crePickId = null;
+      game.round.favoriteAnswerId = null;
+      game.round.creativeAnswerId = null;
       return; // Game over, stop processing
     }
   }
@@ -696,15 +636,15 @@ r.locks[aboutId] = {
   if (creAuthorId && creAuthorId !== favAuthorId) {
     const gameOver = await increaseRoastMeter(creAuthorId);
     if (gameOver) {
-      favPickId = null;
-      crePickId = null;
+      game.round.favoriteAnswerId = null;
+      game.round.creativeAnswerId = null;
       return; // Game over, stop processing
     }
   }
 
   // ✅ Reset local UI state AFTER transaction completes
-  favPickId = null;
-  crePickId = null;
+  game.round.favoriteAnswerId = null;
+  game.round.creativeAnswerId = null;
 
   // 🔥 Immediately render to show highlights for all clients (including host)
   render();
@@ -798,13 +738,30 @@ block.innerHTML = `
     });
   }
 
+  // highlight favorite and creative selections
+  const favId = r.favoriteAnswerId;
+  const creId = r.creativeAnswerId;
+  const blocks = list.querySelectorAll('.answerBlock');
+  blocks.forEach(block => {
+    const sid = block.dataset.submissionId;
+    if (sid === favId) {
+      block.classList.add('pickedFav');
+    } else {
+      block.classList.remove('pickedFav');
+    }
+    if (sid === creId) {
+      block.classList.add('pickedCreative');
+    } else {
+      block.classList.remove('pickedCreative');
+    }
+  });
+
   // If this page is locked, mark the winning submissions for everyone (no names)
   const lock = r.locks?.[aboutId];
   if (lock?.resolved) {
-    const favId = lock.favoriteSubmissionId;
-    const creId = lock.creativeSubmissionId;
+    const lockFavId = lock.favoriteSubmissionId;
+    const lockCreId = lock.creativeSubmissionId;
 
-    const blocks = list.querySelectorAll('.answerBlock');
     blocks.forEach(block => {
       const sid = block.dataset.submissionId;
 
@@ -812,36 +769,35 @@ block.innerHTML = `
       const prev = block.querySelectorAll('.winnerBadge');
       prev.forEach(n => n.remove());
 
-      if (sid === favId) {
+      if (sid === lockFavId) {
         block.classList.add('pickedFav');
-        const h = block.querySelector('h4');
-        if (h) {
-          const span = document.createElement('span');
-          span.className = 'winnerBadge';
-          span.style.marginLeft = '8px';
-          span.style.color = '#ffd700';
-          span.textContent = '⭐ Favorite';
-          h.appendChild(span);
-        }
+        const span = document.createElement('span');
+        span.className = 'winnerBadge';
+        span.textContent = '⭐ Favorite';
+        block.appendChild(span);
       }
 
-      if (sid === creId) {
+      if (sid === lockCreId) {
         block.classList.add('pickedCreative');
-        const h = block.querySelector('h4');
-        if (h) {
-          const span = document.createElement('span');
-          span.className = 'winnerBadge';
-          span.style.marginLeft = '8px';
-          span.style.color = '#9b59b6';
-          span.textContent = '🎨 Most Creative';
-          h.appendChild(span);
-        }
+        const span = document.createElement('span');
+        span.className = 'winnerBadge';
+        span.textContent = '🎨 Most Creative';
+        block.appendChild(span);
       }
     });
   }
 
   // Owner controls visibility - only show when page owner can pick
   $("ownerActions").classList.toggle("hidden", !canPick);
+
+  // Update owner action labels and button
+  if (canPick) {
+    const favSub = r.submissions.find(s => s.id === favId);
+    const creSub = r.submissions.find(s => s.id === creId);
+    $("favPickLabel").textContent = favSub ? truncate(favSub.text, 50) : "—";
+    $("crePickLabel").textContent = creSub ? truncate(creSub.text, 50) : "—";
+    $("btnLockIn").disabled = !(favId && creId);
+  }
 
  // Result display
   const lock2 = r.locks?.[aboutId];
