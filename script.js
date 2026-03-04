@@ -575,40 +575,83 @@ function renderReveal() {
 
   applySelectionHighlights();
 
+  // If this page is locked, mark the winning submissions for everyone (no names)
+  const lock = r.locks?.[aboutId];
+  if (lock?.resolved) {
+    const favId = lock.favoriteSubmissionId;
+    const creId = lock.creativeSubmissionId;
+
+    const blocks = list.querySelectorAll('.answerBlock');
+    blocks.forEach(block => {
+      const sid = block.dataset.submissionId;
+
+      // remove any existing inline badges we might have added previously
+      const prev = block.querySelectorAll('.winnerBadge');
+      prev.forEach(n => n.remove());
+
+      if (sid === favId) {
+        block.classList.add('pickedFav');
+        const h = block.querySelector('h4');
+        if (h) {
+          const span = document.createElement('span');
+          span.className = 'winnerBadge';
+          span.style.marginLeft = '8px';
+          span.style.color = '#ffd700';
+          span.textContent = '⭐ Favorite';
+          h.appendChild(span);
+        }
+      }
+
+      if (sid === creId) {
+        block.classList.add('pickedCreative');
+        const h = block.querySelector('h4');
+        if (h) {
+          const span = document.createElement('span');
+          span.className = 'winnerBadge';
+          span.style.marginLeft = '8px';
+          span.style.color = '#9b59b6';
+          span.textContent = '🎨 Most Creative';
+          h.appendChild(span);
+        }
+      }
+    });
+  }
+
   // Owner controls visibility - only show when page owner can pick
   $("ownerActions").classList.toggle("hidden", !canPick);
 
  // Result display
-const lock = r.locks?.[aboutId];
-const resultPanel = $("revealResult");
+  const lock2 = r.locks?.[aboutId];
+  const resultPanel = $("revealResult");
 
-if (lock?.resolved) {
-  const fav = r.submissions.find(s => s.id === lock.favoriteSubmissionId);
-  const creative = r.submissions.find(s => s.id === lock.creativeSubmissionId);
+  if (lock2?.resolved) {
+    const fav = r.submissions.find(s => s.id === lock2.favoriteSubmissionId);
+    const creative = r.submissions.find(s => s.id === lock2.creativeSubmissionId);
 
-  const favAuthor = game.players.find(p => p.id === fav?.authorId);
-  const creativeAuthor = game.players.find(p => p.id === creative?.authorId);
+    let message = "";
 
-  let message = "";
+    if (fav) {
+      message += `⭐ Favorite: ${truncate(fav.text, 200)}\n`;
+    } else {
+      message += `⭐ Favorite selected\n`;
+    }
 
-  if (favAuthor) {
-    message += `⭐ Favorite: ${favAuthor.name} (+1)\n`;
+    if (creative) {
+      message += `🎨 Most Creative: ${truncate(creative.text, 200)}\n`;
+    } else {
+      message += `🎨 Most Creative selected\n`;
+    }
+
+    if (fav?.authorId === me.id || creative?.authorId === me.id) {
+      message += `\nYou earned point(s)! 🎉`;
+    }
+
+    $("resultText").textContent = message;
+    resultPanel.classList.remove("hidden");
+  } else {
+    resultPanel.classList.add("hidden");
+    $("resultText").textContent = "—";
   }
-
-  if (creativeAuthor) {
-    message += `🎨 Most Creative: ${creativeAuthor.name} (+1)\n`;
-  }
-
-  if (favAuthor?.id === me.id || creativeAuthor?.id === me.id) {
-    message += `\nYou earned point(s)! 🎉`;
-  }
-
-  $("resultText").textContent = message;
-  resultPanel.classList.remove("hidden");
-} else {
-  resultPanel.classList.add("hidden");
-  $("resultText").textContent = "—";
-}
 }
 function renderLobby() {
   if (!game) return;
