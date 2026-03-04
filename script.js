@@ -166,8 +166,7 @@ if (game.phase === "answering") {
       break;
   }
 }
-    
-}
+
     // 🔥 THEN render
     render();
   });
