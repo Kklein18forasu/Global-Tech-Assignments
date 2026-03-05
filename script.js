@@ -495,6 +495,8 @@ async function ownerSelectAnswer(submissionId) {
   const currentFav = game?.round?.favoriteAnswerId;
   const currentCre = game?.round?.creativeAnswerId;
 
+  console.log(`ownerSelectAnswer: submissionId=${submissionId}, currentFav=${currentFav}, currentCre=${currentCre}`);
+
   let newFav = currentFav;
   let newCre = currentCre;
 
@@ -582,6 +584,8 @@ async function ownerLockIn() {
   const favoriteSubmissionId = favPickId;
   const creativeSubmissionId = crePickId;
 
+  console.log(`ownerLockIn: favoriteSubmissionId=${favoriteSubmissionId}, creativeSubmissionId=${creativeSubmissionId}`);
+
   if (!favoriteSubmissionId || !creativeSubmissionId) {
     return alert("Pick a favorite and a creative submission.");
   }
@@ -589,6 +593,7 @@ async function ownerLockIn() {
   let favAuthorId = null;
   let creAuthorId = null;
 
+  console.log("ownerLockIn: Starting transaction");
   await runTransaction(gameRef, (cur) => {
     if (!cur?.round) return cur;
 
@@ -637,6 +642,8 @@ async function ownerLockIn() {
     return cur;
   });
 
+  console.log("ownerLockIn: Transaction completed");
+
   // ✅ After transaction, increment roast meters and check for winner
   if (favAuthorId) {
     const gameOver = await increaseRoastMeter(favAuthorId);
@@ -684,6 +691,7 @@ function renderReveal() {
   const isOwner = me.id === aboutId;
   const isLocked = !!r.locks?.[aboutId]?.resolved;
   const canPick = isOwner && !isLocked;
+  console.log(`renderReveal: me.id=${me.id}, aboutId=${aboutId}, isOwner=${isOwner}`);
   console.log({ meId: me.id, revealId: aboutId, isOwner, locked: isLocked, canPick });
 
   if (isHost()) {
