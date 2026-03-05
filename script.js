@@ -135,6 +135,11 @@ let lastRoundQuestionIds = [];
 let answeringUiRoundKey = null;
 let draftAnswersByQid = new Map();
 
+// Global variables for reveal selections
+let favPickId = null;
+let crePickId = null;
+let currentRevealOwner = null;
+
 // ---------- Screens + Header UI (matches your HTML) ----------
 const screens = {
   room: $("screenRoom"),
@@ -524,6 +529,10 @@ async function ownerSelectAnswer(submissionId) {
     return;
   }
 
+  // Update local state
+  favPickId = newFav;
+  crePickId = newCre;
+
   // Update local copy
   if (game?.round) {
     game.round.favoriteAnswerId = newFav;
@@ -568,8 +577,8 @@ async function ownerLockIn() {
   const aboutId = currentRevealPlayerId();
   if (aboutId !== me.id) return;
 
-  const favoriteSubmissionId = game.round.favoriteAnswerId;
-  const creativeSubmissionId = game.round.creativeAnswerId;
+  const favoriteSubmissionId = favPickId;
+  const creativeSubmissionId = crePickId;
 
   if (!favoriteSubmissionId || !creativeSubmissionId) {
     return alert("Pick a favorite and a creative submission.");
@@ -648,6 +657,8 @@ async function ownerLockIn() {
   // ✅ Reset local UI state AFTER transaction completes
   game.round.favoriteAnswerId = null;
   game.round.creativeAnswerId = null;
+  favPickId = null;
+  crePickId = null;
 
   // 🔥 Immediately render to show highlights for all clients (including host)
   render();
@@ -659,6 +670,13 @@ function renderReveal() {
   const r = game.round;
   const aboutId = currentRevealPlayerId();
   if (!aboutId) return;
+
+  // Reset local selection state when the reveal player changes
+  if (currentRevealOwner !== aboutId) {
+    favPickId = null;
+    crePickId = null;
+    currentRevealOwner = aboutId;
+  }
 
   // 🔍 DEBUG: Log key values to verify page owner detection
   const isOwner = me.id === aboutId;
@@ -819,11 +837,11 @@ function renderReveal() {
 
   // Update owner action labels and button
   if (canPick) {
-    const favSub = r.submissions.find(s => s.id === favId);
-    const creSub = r.submissions.find(s => s.id === creId);
+    const favSub = r.submissions.find(s => s.id === favPickId);
+    const creSub = r.submissions.find(s => s.id === crePickId);
     $("favPickLabel").textContent = favSub ? truncate(favSub.text, 50) : "—";
     $("crePickLabel").textContent = creSub ? truncate(creSub.text, 50) : "—";
-    $("btnLockIn").disabled = !(favId && creId);
+    $("btnLockIn").disabled = !(favPickId && crePickId);
   }
 
  // Result display
