@@ -477,15 +477,13 @@ for (const q of (game.round.questions ?? [])) {
 
 // ---------- Owner Selection Logic ----------
 async function ownerSelectAnswer(submissionId) {
-  // 🔒 Guard: verify the reveal player is acting and page is not locked
+  // 🔒 Guard: only the reveal player (aboutId) may select answers, and only if
+  // the page isn't already locked. Hosts and other players are blocked.
   const aboutId = currentRevealPlayerId();
   const isLocked = !!game?.round?.locks?.[aboutId]?.resolved;
-  const canPick = me.id === aboutId && !isLocked;
 
-  console.log({ meId: me.id, revealId: aboutId, isHost: isHost(), locked: isLocked, canPick, submissionId });
-
-  if (!canPick) {
-    console.warn("❌ Cannot pick: not the reveal player or page is locked");
+  if (me.id !== aboutId || isLocked) {
+    console.warn("Only the reveal player can select answers.");
     return;
   }
 
@@ -683,13 +681,12 @@ function renderReveal() {
   favPickId = r.favoriteAnswerId ?? null;
   crePickId = r.creativeAnswerId ?? null;
 
-  // 🔍 DEBUG: Log key values to verify page owner detection
-  const isOwner = me.id === aboutId; // still useful for debugging
   const isLocked = !!r.locks?.[aboutId]?.resolved;
-  // only the reveal player can pick answers
+  // only the reveal player may pick and only before the page is locked
   const canPick = me.id === aboutId && !isLocked;
-  console.log(`renderReveal: me.id=${me.id}, aboutId=${aboutId}, isOwner=${isOwner}`);
-  console.log({ meId: me.id, revealId: aboutId, isOwner, locked: isLocked, canPick });
+  // (debugging left intact if needed)
+  console.log(`renderReveal: me.id=${me.id}, aboutId=${aboutId}`);
+  console.log({ meId: me.id, revealId: aboutId, locked: isLocked, canPick });
 
   if (isHost()) {
     const locked = r.locks?.[aboutId]?.resolved;
@@ -845,8 +842,9 @@ function renderReveal() {
     });
   }
 
-  // Owner controls visibility - only show when page owner can pick
-  $("ownerActions").classList.toggle("hidden", !canPick);
+  // Owner controls visibility - hide for everyone except the reveal player
+  // (locked state doesn't affect visibility here; only the correct player sees it)
+  $("ownerActions").classList.toggle("hidden", me.id !== aboutId);
 
   // Update owner action labels and button
   if (canPick) {
