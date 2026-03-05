@@ -138,7 +138,6 @@ let draftAnswersByQid = new Map();
 // Global variables for reveal selections
 let favPickId = null;
 let crePickId = null;
-let currentRevealOwner = null;
 
 // ---------- Screens + Header UI (matches your HTML) ----------
 const screens = {
@@ -478,15 +477,15 @@ for (const q of (game.round.questions ?? [])) {
 
 // ---------- Owner Selection Logic ----------
 async function ownerSelectAnswer(submissionId) {
-  // 🔒 Guard: verify host is acting and page is not locked
+  // 🔒 Guard: verify the reveal player is acting and page is not locked
   const aboutId = currentRevealPlayerId();
   const isLocked = !!game?.round?.locks?.[aboutId]?.resolved;
-  const canPick = isHost() && !isLocked;
+  const canPick = me.id === aboutId && !isLocked;
 
   console.log({ meId: me.id, revealId: aboutId, isHost: isHost(), locked: isLocked, canPick, submissionId });
 
   if (!canPick) {
-    console.warn("❌ Cannot pick: not host or page is locked");
+    console.warn("❌ Cannot pick: not the reveal player or page is locked");
     return;
   }
 
@@ -520,8 +519,8 @@ async function ownerSelectAnswer(submissionId) {
     await runTransaction(gameRef, cur => {
       if (!cur?.round) return cur;
       const r = cur.round;
-        // guard again — only host may update selections
-      if (!isHost()) return cur;
+        // guard again — only the reveal player may update selections
+      if (me.id !== aboutId) return cur;
       if (r.locks?.[aboutId]?.resolved) return cur;
       r.favoriteAnswerId = newFav;
       r.creativeAnswerId = newCre;
@@ -574,11 +573,9 @@ async function increaseRoastMeter(playerId) {
 async function ownerLockIn() {
   if (!game?.round) return;
 
-  // 🔥 FIX: Only the host should update scores to prevent duplicate scoring
-  if (!isHost()) return;
-
+  // 🔥 FIX: Only the reveal player should update scores to prevent duplicate scoring
   const aboutId = currentRevealPlayerId();
-  // host may lock in regardless of who the current reveal player is
+  if (me.id !== aboutId) return;
 
   const favoriteSubmissionId = favPickId;
   const creativeSubmissionId = crePickId;
@@ -602,6 +599,9 @@ async function ownerLockIn() {
 
     // already locked
     if (r.locks[aboutId]?.resolved) return cur;
+
+    // guard: only the reveal player may lock in
+    if (me.id !== aboutId) return cur;
 
     const fav = (r.submissions ?? []).find(s => s.id === favoriteSubmissionId);
     const creative = (r.submissions ?? []).find(s => s.id === creativeSubmissionId);
@@ -679,18 +679,15 @@ function renderReveal() {
   const aboutId = currentRevealPlayerId();
   if (!aboutId) return;
 
-  // Reset local selection state when the reveal player changes
-  if (currentRevealOwner !== aboutId) {
-    favPickId = null;
-    crePickId = null;
-    currentRevealOwner = aboutId;
-  }
+  // Set local selection state from shared Firebase state
+  favPickId = r.favoriteAnswerId ?? null;
+  crePickId = r.creativeAnswerId ?? null;
 
   // 🔍 DEBUG: Log key values to verify page owner detection
   const isOwner = me.id === aboutId; // still useful for debugging
   const isLocked = !!r.locks?.[aboutId]?.resolved;
-  // only the host should be able to pick answers (not the page owner)
-  const canPick = isHost() && !isLocked;
+  // only the reveal player can pick answers
+  const canPick = me.id === aboutId && !isLocked;
   console.log(`renderReveal: me.id=${me.id}, aboutId=${aboutId}, isOwner=${isOwner}`);
   console.log({ meId: me.id, revealId: aboutId, isOwner, locked: isLocked, canPick });
 
@@ -774,8 +771,7 @@ function renderReveal() {
     ownerSelectAnswer(s.id);
   };
 
-  block.addEventListener("click", handleSelect);
-  block.addEventListener("touchstart", handleSelect, { passive: false });
+  block.addEventListener("pointerdown", handleSelect);
 }
 
       groupDiv.appendChild(block);
