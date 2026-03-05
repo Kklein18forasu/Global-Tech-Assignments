@@ -445,3 +445,7 @@ textarea { min-height: 90px; resize: vertical; }
     opacity: 1;
   }
 }
+
+.answerBlock {
+  touch-action: manipulation;
+}

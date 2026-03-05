@@ -767,9 +767,16 @@ function renderReveal() {
 `;
 
       if (canPick) {
-        block.style.cursor = "pointer";
-        block.addEventListener("click", () => ownerSelectAnswer(s.id));
-      }
+  block.style.cursor = "pointer";
+
+  const handleSelect = (e) => {
+    e.preventDefault();
+    ownerSelectAnswer(s.id);
+  };
+
+  block.addEventListener("click", handleSelect);
+  block.addEventListener("touchstart", handleSelect, { passive: false });
+}
 
       groupDiv.appendChild(block);
 
