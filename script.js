@@ -111,8 +111,8 @@ const QUESTION_BANK = [
   { id: "q49", text: "What compliment would confuse them the most?" },
   { id: "q50", text: "What would their villain nickname be?" },
   { id: "q51", text: "What’s the most embarrassing thing they’d go viral for?" },
-  { id: "q52", text: "What’s the most predictable thing they do?" }
-  { id: "q53", text: "What fictional character do they remind you most of?" },
+  { id: "q52", text: "What’s the most predictable thing they do?" },
+{ id: "q53", text: "What fictional character do they remind you most of?" },
 { id: "q54", text: "What is their most irrational fear?" },
 { id: "q55", text: "What is the worst fashion choice they have ever made?" },
 { id: "q56", text: "What is something they constantly misplace?" },
