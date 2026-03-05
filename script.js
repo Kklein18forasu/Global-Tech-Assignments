@@ -582,8 +582,16 @@ async function ownerLockIn() {
 
   console.log(`ownerLockIn: favoriteSubmissionId=${favoriteSubmissionId}, creativeSubmissionId=${creativeSubmissionId}`);
 
-  if (!favoriteSubmissionId || !creativeSubmissionId) {
-    return alert("Pick a favorite and a creative submission.");
+  // determine how many answers are on this page so we can relax the rules
+  const subs = (game.round.submissions ?? []).filter(s => s.aboutId === aboutId);
+  const answerCount = subs.length;
+
+  if (!favoriteSubmissionId || (answerCount > 1 && !creativeSubmissionId)) {
+    // message varies depending on count
+    const msg = answerCount === 1
+      ? "Pick a favorite submission."
+      : "Pick a favorite and a creative submission.";
+    return alert(msg);
   }
 
   let favAuthorId = null;
@@ -604,9 +612,15 @@ async function ownerLockIn() {
     if (me.id !== aboutId) return cur;
 
     const fav = (r.submissions ?? []).find(s => s.id === favoriteSubmissionId);
-    const creative = (r.submissions ?? []).find(s => s.id === creativeSubmissionId);
+    // look up creative only if an ID was provided
+    const creative = creativeSubmissionId
+      ? (r.submissions ?? []).find(s => s.id === creativeSubmissionId)
+      : null;
 
-    if (!fav || !creative) return cur;
+    // If there's not a favorite, abort; creative is optional when only one answer
+    const subsInside = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
+    const answerCountInside = subsInside.length;
+    if (!fav || (answerCountInside > 1 && !creative)) return cur;
 
     // Favorite gets +1 roast meter
     const favPlayer = cur.players.find(p => p.id === fav.authorId);
@@ -620,15 +634,17 @@ async function ownerLockIn() {
       }
     }
 
-    // Creative gets +1 roast meter
-    const crePlayer = cur.players.find(p => p.id === creative.authorId);
-    if (crePlayer) {
-      crePlayer.roastMeter = (crePlayer.roastMeter ?? 0) + 1;
-      creAuthorId = creative.authorId;
+    // Creative gets +1 roast meter (only if we actually have one)
+    if (creative) {
+      const crePlayer = cur.players.find(p => p.id === creative.authorId);
+      if (crePlayer) {
+        crePlayer.roastMeter = (crePlayer.roastMeter ?? 0) + 1;
+        creAuthorId = creative.authorId;
 
-      if (crePlayer.roastMeter >= 10) {
-        cur.phase = "gameover";
-        cur.winnerId = crePlayer.id;
+        if (crePlayer.roastMeter >= 10) {
+          cur.phase = "gameover";
+          cur.winnerId = crePlayer.id;
+        }
       }
     }
 
@@ -707,6 +723,13 @@ function renderReveal() {
    // Only answers ABOUT this player
   const subs = (r.submissions ?? []).filter(s => s.aboutId === aboutId);
   const qById = new Map((r.questions ?? []).map(q => [q.id, q]));
+
+  // If only one submission exists and I'm the reveal player, preselect it as the favorite
+  if (subs.length === 1 && me.id === aboutId) {
+    favPickId = subs[0].id;
+    // note: we don't persist to Firebase here; the local state ensures the button
+    // enables immediately and the selection is visible to the current client.
+  }
 
   // If there are no answers for this player, show a message and adjust controls
   if (subs.length === 0) {
@@ -796,9 +819,9 @@ function renderReveal() {
     });
   }
 
-  // highlight favorite and creative selections
-  const favId = r.favoriteAnswerId;
-  const creId = r.creativeAnswerId;
+  // highlight favorite and creative selections (use local picks if available so auto-selection shows up)
+  const favId = favPickId ?? r.favoriteAnswerId;
+  const creId = crePickId ?? r.creativeAnswerId;
   const blocks = list.querySelectorAll('.answerBlock');
   blocks.forEach(block => {
     const sid = block.dataset.submissionId;
@@ -855,7 +878,14 @@ function renderReveal() {
     const creSub = r.submissions.find(s => s.id === crePickId);
     $("favPickLabel").textContent = favSub ? truncate(favSub.text, 50) : "—";
     $("crePickLabel").textContent = creSub ? truncate(creSub.text, 50) : "—";
-    $("btnLockIn").disabled = !(favPickId && crePickId);
+
+    // button enabled logic varies based on number of answers
+    const answerCount = subs.length;
+    if (answerCount === 1) {
+      $("btnLockIn").disabled = !favPickId;
+    } else {
+      $("btnLockIn").disabled = !(favPickId && crePickId);
+    }
   }
 
  // Result display
@@ -865,6 +895,7 @@ function renderReveal() {
   if (lock2?.resolved) {
     const fav = r.submissions.find(s => s.id === lock2.favoriteSubmissionId);
     const creative = r.submissions.find(s => s.id === lock2.creativeSubmissionId);
+    const answerCount = subs.length;
 
     let message = "";
 
@@ -876,7 +907,8 @@ function renderReveal() {
 
     if (creative) {
       message += `🎨 Most Creative: ${truncate(creative.text, 200)}\n`;
-    } else {
+    } else if (answerCount > 1) {
+      // only show generic creative message when there was more than one answer
       message += `🎨 Most Creative selected\n`;
     }
 
