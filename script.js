@@ -478,16 +478,15 @@ for (const q of (game.round.questions ?? [])) {
 
 // ---------- Owner Selection Logic ----------
 async function ownerSelectAnswer(submissionId) {
-  // 🔒 Guard: verify this player is the page owner and page is not locked
+  // 🔒 Guard: verify host is acting and page is not locked
   const aboutId = currentRevealPlayerId();
-  const isOwner = me.id === aboutId;
   const isLocked = !!game?.round?.locks?.[aboutId]?.resolved;
-  const canPick = isOwner && !isLocked;
+  const canPick = isHost() && !isLocked;
 
-  console.log({ meId: me.id, revealId: aboutId, isOwner, locked: isLocked, canPick, submissionId });
+  console.log({ meId: me.id, revealId: aboutId, isHost: isHost(), locked: isLocked, canPick, submissionId });
 
   if (!canPick) {
-    console.warn("❌ Cannot pick: not page owner or page is locked");
+    console.warn("❌ Cannot pick: not host or page is locked");
     return;
   }
 
@@ -521,8 +520,8 @@ async function ownerSelectAnswer(submissionId) {
     await runTransaction(gameRef, cur => {
       if (!cur?.round) return cur;
       const r = cur.round;
-      // guard again
-      if (me.id !== aboutId) return cur;
+        // guard again — only host may update selections
+      if (!isHost()) return cur;
       if (r.locks?.[aboutId]?.resolved) return cur;
       r.favoriteAnswerId = newFav;
       r.creativeAnswerId = newCre;
@@ -579,7 +578,7 @@ async function ownerLockIn() {
   if (!isHost()) return;
 
   const aboutId = currentRevealPlayerId();
-  if (aboutId !== me.id) return;
+  // host may lock in regardless of who the current reveal player is
 
   const favoriteSubmissionId = favPickId;
   const creativeSubmissionId = crePickId;
@@ -688,9 +687,10 @@ function renderReveal() {
   }
 
   // 🔍 DEBUG: Log key values to verify page owner detection
-  const isOwner = me.id === aboutId;
+  const isOwner = me.id === aboutId; // still useful for debugging
   const isLocked = !!r.locks?.[aboutId]?.resolved;
-  const canPick = isOwner && !isLocked;
+  // only the host should be able to pick answers (not the page owner)
+  const canPick = isHost() && !isLocked;
   console.log(`renderReveal: me.id=${me.id}, aboutId=${aboutId}, isOwner=${isOwner}`);
   console.log({ meId: me.id, revealId: aboutId, isOwner, locked: isLocked, canPick });
 
