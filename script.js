@@ -208,6 +208,8 @@ function openRoom(roomCode) {
     if (!data) return;
 
     game = data;
+    // Set role based on persisted ID
+    me.role = game.hostId === me.id ? "host" : "player";
     setTopStatus();
 
     // ✅ Single routing logic (no conflicting overrides)
