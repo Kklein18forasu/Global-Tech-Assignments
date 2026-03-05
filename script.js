@@ -482,7 +482,9 @@ async function ownerSelectAnswer(submissionId) {
   const aboutId = currentRevealPlayerId();
   const isLocked = !!game?.round?.locks?.[aboutId]?.resolved;
 
-  if (me.id !== aboutId || isLocked) {
+  const revealPlayer = game.players.find(p => p.id === aboutId);
+
+  if (!revealPlayer || revealPlayer.id !== me.id || isLocked) {
     console.warn("Only the reveal player can select answers.");
     return;
   }
@@ -683,7 +685,8 @@ function renderReveal() {
 
   const isLocked = !!r.locks?.[aboutId]?.resolved;
   // only the reveal player may pick and only before the page is locked
-  const canPick = me.id === aboutId && !isLocked;
+  const revealPlayer = game.players.find(p => p.id === aboutId);
+  const canPick = revealPlayer && revealPlayer.id === me.id && !isLocked;
   // (debugging left intact if needed)
   console.log(`renderReveal: me.id=${me.id}, aboutId=${aboutId}`);
   console.log({ meId: me.id, revealId: aboutId, locked: isLocked, canPick });
@@ -844,7 +847,7 @@ function renderReveal() {
 
   // Owner controls visibility - hide for everyone except the reveal player
   // (locked state doesn't affect visibility here; only the correct player sees it)
-  $("ownerActions").classList.toggle("hidden", me.id !== aboutId);
+  $("ownerActions").classList.toggle("hidden", !canPick);
 
   // Update owner action labels and button
   if (canPick) {
