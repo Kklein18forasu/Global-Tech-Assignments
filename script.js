@@ -70,7 +70,7 @@ const QUESTION_BANK = [
   { id: "q8", text: "What do they swear they're good at but absolutely aren't?" },
   { id: "q9", text: "What’s their most chaotic habit?" },
   { id: "q10", text: "What’s the weirdest hill they would die on?" },
-  { id: "q11", text: "What would be a conspiracy other have about them?" },
+  { id: "q11", text: "What conspiracy would others have about them?"},
   { id: "q12", text: "What’s something they do that makes everyone quietly judge them?" },
   { id: "q13", text: "What’s something they take way too seriously?" },
   { id: "q14", text: "What has been the highlight of their year so far?" },
@@ -147,7 +147,23 @@ const QUESTION_BANK = [
 { id: "q85", text: "What song would be their theme song?" },
 { id: "q86", text: "If they were to create a new holiday, what would people celebrate?" },
 { id: "q87", text: "If they were to break a world record, what would it be?" },
-{ id: "q88", text: "If they could be anywhere in the world right now, where would they be?" }
+{ id: "q88", text: "If they could be anywhere in the world right now, where would they be?" },
+{ id: "q89", text: "If they were to kill somebody, who would it be and how would they do it?" },
+{ id: "q90", text: "What are they attracted to?" },
+{ id: "q91", text: "What is next on their to-do list?" },
+{ id: "q92", text: "What would they most want to hide from their parents?" },
+{ id: "q93", text: "If they had an army of followers, what would they be called?" },
+{ id: "q94", text: "What will their last words be?" },
+{ id: "q95", text: "What question would they hate to answer?" },
+{ id: "q96", text: "If they were to get a secret tattoo, what would it be?" },
+{ id: "q97", text: "Who did they last message and what did it say?" },
+{ id: "q98", text: "What is the strangest thing they have in their house?" },
+{ id: "q99", text: "If they were flirting with someone, what's the first thing they would say?" },
+{ id: "q100", text: "What do they say to themselves before they go to sleep?" },
+{ id: "q101", text: "If they were calling in sick, what would their excuse be?" },
+{ id: "q102", text: "Describe them in three words." },
+{ id: "q103", text: "What was the last thing they searched on the internet?" },
+{ id: "q104", text: "If they did commercials, what would they be for?" },
 ];
 
 // ---------- App State ----------
